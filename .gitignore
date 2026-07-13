@@ -1,0 +1,14 @@
+.env
+target/
+*.class
+*.log
+.DS_Store
+.idea/
+*.iml
+.gemini/
+/.vscode
+goal.md
+run-server.sh
+/run-server
+/scripts
+setup-test-server.sh

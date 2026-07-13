@@ -1,0 +1,16 @@
+name: KinsakuDiscordSystem
+version: '${project.version}'
+main: net.niwa.kinsaku.discordsystem.KinsakuDiscordSystem
+api-version: '1.20'
+folia-supported: true
+description: MinecraftとDiscordを連携するホワイトリスト・ユーザー管理システム
+softdepend: [Geyser-Spigot, Floodgate]
+commands:
+  kinsaku-usersystem:
+    description: Kinsaku Discord System 管理コマンド
+    permission: kinsaku.admin
+    usage: /<command> [reload|status]
+permissions:
+  kinsaku.admin:
+    description: Kinsaku Discord System 管理コマンドの実行権限
+    default: op

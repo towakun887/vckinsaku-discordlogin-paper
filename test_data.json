@@ -1,0 +1,109 @@
+{
+  "playerInfo": [
+    {
+      "id": 101,
+      "discordUserId": 1,
+      "discordId": "mockDiscordId",
+      "universityName": "東京大学",
+      "minecraftId": "TestJavaPlayer",
+      "minecraftUuid": "11111111-2222-3333-4444-555555555555",
+      "edition": "JAVA",
+      "registeredAt": "2026-07-10 12:00:00",
+      "lastLoginAt": "2026-07-10 12:30:00",
+      "isActive": true
+    },
+    {
+      "id": 102,
+      "discordUserId": 1,
+      "discordId": "mockDiscordId",
+      "universityName": "東京大学",
+      "minecraftId": "TestBedrockPlayer",
+      "minecraftUuid": "66666666-7777-8888-9999-000000000000",
+      "edition": "BEDROCK",
+      "registeredAt": "2026-07-10 12:05:00",
+      "lastLoginAt": null,
+      "isActive": true
+    }
+  ],
+  "searchPlayer": [
+    {
+      "id": 201,
+      "discordUserId": 2,
+      "discordId": "123456789012345678",
+      "universityName": "京都大学",
+      "minecraftId": "Steve",
+      "minecraftUuid": "mock-uuid-201",
+      "edition": "JAVA",
+      "registeredAt": "2026-07-10 12:00:00",
+      "lastLoginAt": "2026-07-10 20:00:00",
+      "isActive": true
+    }
+  ],
+  "playerList": [
+    {
+      "id": 301,
+      "discordUserId": 3,
+      "discordId": "111111111111111111",
+      "universityName": "東京大学",
+      "minecraftId": "UT_Steve",
+      "minecraftUuid": "mock-uuid-301",
+      "edition": "JAVA",
+      "registeredAt": "2026-07-10 12:00:00",
+      "isActive": true
+    },
+    {
+      "id": 302,
+      "discordUserId": 4,
+      "discordId": "222222222222222222",
+      "universityName": "京都大学",
+      "minecraftId": "KU_Alex",
+      "minecraftUuid": "mock-uuid-302",
+      "edition": "BEDROCK",
+      "registeredAt": "2026-07-10 12:10:00",
+      "isActive": true
+    }
+  ],
+  "statistics": {
+    "total_accounts": 18.0,
+    "total_users": 15.0,
+    "editions": {
+      "JAVA": 10.0,
+      "BEDROCK": 8.0
+    },
+    "universities": {
+      "東京大学": 6.0,
+      "京都大学": 4.0,
+      "早稲田大学": 8.0
+    }
+  },
+  "universities": [
+    {
+      "id": 1,
+      "name": "東京大学",
+      "discordRoleId": "111111111111111111",
+      "isActive": true,
+      "createdAt": "2026-07-10 00:00:00"
+    },
+    {
+      "id": 2,
+      "name": "京都大学",
+      "discordRoleId": "222222222222222222",
+      "isActive": true,
+      "createdAt": "2026-07-10 00:00:00"
+    },
+    {
+      "id": 3,
+      "name": "早稲田大学",
+      "discordRoleId": null,
+      "isActive": true,
+      "createdAt": "2026-07-10 00:00:00"
+    }
+  ],
+  "onlinePlayersDetail": [
+    {
+      "minecraftId": "MockPlayer1",
+      "discordId": "123456789012345678",
+      "universityRoleId": "111111111111111111"
+    }
+  ]
+}

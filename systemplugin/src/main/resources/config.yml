@@ -1,0 +1,13 @@
+api:
+  port: 25580
+  key: "your-shared-api-key-here"
+
+database:
+  file: "kinsaku.db"
+
+crossplay:
+  bedrock-prefix: "."
+  use-floodgate: true
+
+messages:
+  whitelist-kick: "あなたはホワイトリストに登録されていません。Discordの /server-whitelist-add コマンドから登録してください。"
