@@ -1,5 +1,7 @@
 api:
+  # botとの通信用HTTPサーバーのport
   port: 25580
+  # 通信認証用のAPIキー。botの.envと同じであればなんでもいい
   key: "your-shared-api-key-here"
 
 database:
