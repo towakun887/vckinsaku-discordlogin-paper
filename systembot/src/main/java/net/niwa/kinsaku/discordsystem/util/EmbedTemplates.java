@@ -44,7 +44,7 @@ public class EmbedTemplates {
                         false)
                 .addField("🗑️ 自分のホワイトリストを削除する",
                         "紐付けられているあなたのアカウントを解除します。\n" +
-                                "コマンド: " + CommandMentionHelper.getMention("server-whitelist-delete"),
+                                "コマンド: " + CommandMentionHelper.getMention("server-whitelist-rem"),
                         false)
                 .addField("🔍 プレイヤー・大学を検索する",
                         "登録されているプレイヤーや大学の所属情報を検索できます。\n" +
@@ -139,11 +139,11 @@ public class EmbedTemplates {
     /**
      * 削除確認Embed
      */
-    public static MessageEmbed createDeleteConfirmEmbed(PlayerAccount account) {
-        return createDeleteConfirmEmbed(account, false);
+    public static MessageEmbed createRemConfirmEmbed(PlayerAccount account) {
+        return createRemConfirmEmbed(account, false);
     }
 
-    public static MessageEmbed createDeleteConfirmEmbed(PlayerAccount account, boolean isAdmin) {
+    public static MessageEmbed createRemConfirmEmbed(PlayerAccount account, boolean isAdmin) {
         return createBaseBuilder(isAdmin)
                 .setTitle("⚠️ アカウント削除の確認")
                 .setDescription("以下のアカウントをホワイトリストから削除しますか？\n" +
@@ -158,11 +158,11 @@ public class EmbedTemplates {
     /**
      * 削除結果Embed
      */
-    public static MessageEmbed createDeleteResultEmbed(boolean success, String message) {
-        return createDeleteResultEmbed(success, message, false);
+    public static MessageEmbed createRemResultEmbed(boolean success, String message) {
+        return createRemResultEmbed(success, message, false);
     }
 
-    public static MessageEmbed createDeleteResultEmbed(boolean success, String message, boolean isAdmin) {
+    public static MessageEmbed createRemResultEmbed(boolean success, String message, boolean isAdmin) {
         return createBaseBuilder(isAdmin)
                 .setTitle(success ? "✅ 削除完了" : "❌ 削除失敗")
                 .setDescription(message)

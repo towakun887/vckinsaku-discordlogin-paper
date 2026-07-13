@@ -9,17 +9,17 @@ import net.niwa.kinsaku.discordsystem.util.ReactionSelectHelper;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-public class WhitelistDeleteCommand extends ListenerAdapter {
+public class WhitelistRemCommand extends ListenerAdapter {
 
     private final PluginApiClient apiClient;
 
-    public WhitelistDeleteCommand(PluginApiClient apiClient) {
+    public WhitelistRemCommand(PluginApiClient apiClient) {
         this.apiClient = apiClient;
     }
 
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
-        if (!event.getName().equals("server-whitelist-delete")) {
+        if (!event.getName().equals("server-whitelist-rem")) {
             return;
         }
 
@@ -57,7 +57,7 @@ public class WhitelistDeleteCommand extends ListenerAdapter {
                                             message.clearReactions().queue();
                                         } catch (Exception ignored) {
                                         }
-                                        deleteSelectedAccounts(hook, discordId, accounts, selectedIndices);
+                                        remSelectedAccounts(hook, discordId, accounts, selectedIndices);
                                     });
                         });
             }).exceptionally(ex -> {
@@ -67,7 +67,7 @@ public class WhitelistDeleteCommand extends ListenerAdapter {
         });
     }
 
-    private void deleteSelectedAccounts(net.dv8tion.jda.api.interactions.InteractionHook hook,
+    private void remSelectedAccounts(net.dv8tion.jda.api.interactions.InteractionHook hook,
             String discordId, List<PlayerAccount> accounts, java.util.Set<Integer> selectedIndices) {
         // 非同期で選択されたアカウントをすべて削除
         CompletableFuture<?>[] futures = selectedIndices.stream()
@@ -102,12 +102,12 @@ public class WhitelistDeleteCommand extends ListenerAdapter {
                 String adminRoleId = net.niwa.kinsaku.discordsystem.config.BotConfig.getInstance().getAdminRoleId();
                 String mention = (adminRoleId != null && !adminRoleId.isEmpty() && hasServerError) ? "<@&" + adminRoleId + "> " : "";
                 hook.editOriginal(mention + "⚠️ 削除処理エラー")
-                    .setEmbeds(EmbedTemplates.createDeleteResultEmbed(
+                    .setEmbeds(EmbedTemplates.createRemResultEmbed(
                         false,
                         "一部またはすべてのアカウント削除処理に失敗しました。時間をおいて再試行してください。"))
                     .queue();
             } else {
-                hook.editOriginalEmbeds(EmbedTemplates.createDeleteResultEmbed(
+                hook.editOriginalEmbeds(EmbedTemplates.createRemResultEmbed(
                         true,
                         "選択した Minecraft アカウントの登録解除処理が完了しました。")).queue();
                 
@@ -118,7 +118,7 @@ public class WhitelistDeleteCommand extends ListenerAdapter {
             String adminRoleId = net.niwa.kinsaku.discordsystem.config.BotConfig.getInstance().getAdminRoleId();
             String mention = (adminRoleId != null && !adminRoleId.isEmpty()) ? "<@&" + adminRoleId + "> " : "";
             hook.editOriginal(mention + "❌ ゲームサーバー連携エラー")
-                .setEmbeds(EmbedTemplates.createDeleteResultEmbed(
+                .setEmbeds(EmbedTemplates.createRemResultEmbed(
                     false,
                     "一部またはすべてのアカウント削除処理に失敗しました。サーバーが起動していない可能性があります。\nエラー内容: " + ex.getMessage()))
                 .queue();

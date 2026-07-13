@@ -15,17 +15,17 @@ import net.niwa.kinsaku.discordsystem.util.ReactionSelectHelper;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-public class AdminDeleteCommand extends ListenerAdapter {
+public class AdminRemCommand extends ListenerAdapter {
 
     private final PluginApiClient apiClient;
 
-    public AdminDeleteCommand(PluginApiClient apiClient) {
+    public AdminRemCommand(PluginApiClient apiClient) {
         this.apiClient = apiClient;
     }
 
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
-        if (!event.getName().equals("server-admin-delete")) {
+        if (!event.getName().equals("server-admin-rem")) {
             return;
         }
 
@@ -74,12 +74,12 @@ public class AdminDeleteCommand extends ListenerAdapter {
 
                     // 確認Embedとボタンを送信
                     PlayerAccount finalTarget = target;
-                    hook.editOriginalEmbeds(EmbedTemplates.createDeleteConfirmEmbed(finalTarget, true))
+                    hook.editOriginalEmbeds(EmbedTemplates.createRemConfirmEmbed(finalTarget, true))
                             .setComponents(ActionRow.of(
-                                    Button.danger("admin:delete:confirm:" + finalTarget.id + ":"
-                                            + finalTarget.minecraftId + ":" + finalTarget.discordId, "✅ 削除を実行"),
-                                    Button.secondary("admin:delete:cancel:" + finalTarget.minecraftId + ":"
-                                            + finalTarget.discordId, "❌ キャンセル")))
+                                    Button.danger("admin:rem:confirm:" + finalTarget.id + ":"
+                                             + finalTarget.minecraftId + ":" + finalTarget.discordId, "✅ 削除を実行"),
+                                    Button.secondary("admin:rem:cancel:" + finalTarget.minecraftId + ":"
+                                             + finalTarget.discordId, "❌ キャンセル")))
                             .queue();
                 }).exceptionally(ex -> {
                     hook.editOriginal("エラーが発生しました: " + ex.getMessage()).queue();
@@ -116,14 +116,14 @@ public class AdminDeleteCommand extends ListenerAdapter {
                                             }
 
                                             if (selectedIndices.isEmpty()) {
-                                                hook.editOriginalEmbeds(EmbedTemplates.createDeleteResultEmbed(false,
+                                                hook.editOriginalEmbeds(EmbedTemplates.createRemResultEmbed(false,
                                                         "削除処理がキャンセルされたか、タイムアウトしました。\n対象: ユーザー <@" + discordId + ">",
                                                         true))
                                                         .setComponents().queue();
                                                 return;
                                             }
 
-                                            deleteSelectedAccounts(hook, discordId, accounts, selectedIndices);
+                                            remSelectedAccounts(hook, discordId, accounts, selectedIndices);
                                         });
                             });
                 }).exceptionally(ex -> {
@@ -137,7 +137,7 @@ public class AdminDeleteCommand extends ListenerAdapter {
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
         String buttonId = event.getComponentId();
-        if (!buttonId.startsWith("admin:delete:")) {
+        if (!buttonId.startsWith("admin:rem:")) {
             return;
         }
 
@@ -155,9 +155,9 @@ public class AdminDeleteCommand extends ListenerAdapter {
             return;
         }
 
-        if (buttonId.startsWith("admin:delete:cancel")) {
-            // admin:delete:cancel:mcId:discordId の形式だが、mcIdにコロンが含まれる可能性に備え安全に分割
-            String remainder = buttonId.substring("admin:delete:cancel:".length());
+        if (buttonId.startsWith("admin:rem:cancel")) {
+            // admin:rem:cancel:mcId:discordId の形式だが、mcIdにコロンが含まれる可能性に備え安全に分割
+            String remainder = buttonId.substring("admin:rem:cancel:".length());
             int lastColon = remainder.lastIndexOf(':');
             String mcId = lastColon > 0 ? remainder.substring(0, lastColon) : remainder;
             String discordId = lastColon > 0 ? remainder.substring(lastColon + 1) : "";
@@ -165,7 +165,7 @@ public class AdminDeleteCommand extends ListenerAdapter {
 
             event.deferEdit().queue(hook -> {
                 hook.editOriginalEmbeds(
-                        EmbedTemplates.createDeleteResultEmbed(false, "削除処理をキャンセルしました。\n対象: " + targetStr, true))
+                        EmbedTemplates.createRemResultEmbed(false, "削除処理をキャンセルしました。\n対象: " + targetStr, true))
                         .setComponents()
                         .queue(message -> {
                             try {
@@ -177,10 +177,10 @@ public class AdminDeleteCommand extends ListenerAdapter {
             return;
         }
 
-        if (buttonId.startsWith("admin:delete:confirm:")) {
-            // admin:delete:confirm:accountId:mcId:discordId の形式で分割
+        if (buttonId.startsWith("admin:rem:confirm:")) {
+            // admin:rem:confirm:accountId:mcId:discordId の形式で分割
             // accountIdは数値のみなのでコロンを含まない。mcIdの後ろのdiscordIdとの区切りは最後のコロン
-            String remainder = buttonId.substring("admin:delete:confirm:".length());
+            String remainder = buttonId.substring("admin:rem:confirm:".length());
             int firstColon = remainder.indexOf(':');
             int accountId = Integer.parseInt(remainder.substring(0, firstColon));
             String afterAccountId = remainder.substring(firstColon + 1);
@@ -192,7 +192,7 @@ public class AdminDeleteCommand extends ListenerAdapter {
             event.deferEdit().queue(hook -> {
                 apiClient.removeAccount(accountId).thenAccept(status -> {
                     if (status == 200) {
-                        hook.editOriginalEmbeds(EmbedTemplates.createDeleteResultEmbed(true,
+                        hook.editOriginalEmbeds(EmbedTemplates.createRemResultEmbed(true,
                                 "アカウントの登録解除とホワイトリストの抹消が完了しました。\n対象: " + targetStr,
                                 true))
                                 .setComponents()
@@ -209,7 +209,7 @@ public class AdminDeleteCommand extends ListenerAdapter {
                         String adminRoleIdLocal = BotConfig.getInstance().getAdminRoleId();
                         String mention = (adminRoleIdLocal != null && !adminRoleIdLocal.isEmpty() && status >= 500) ? "<@&" + adminRoleIdLocal + "> " : "";
                         hook.editOriginal(mention + "❌ 登録削除エラー")
-                            .setEmbeds(EmbedTemplates.createDeleteResultEmbed(false,
+                            .setEmbeds(EmbedTemplates.createRemResultEmbed(false,
                                 "APIサーバーでの削除処理に失敗しました。\n対象: " + targetStr,
                                 true))
                                 .setComponents()
@@ -224,7 +224,7 @@ public class AdminDeleteCommand extends ListenerAdapter {
                     String adminRoleIdLocal = BotConfig.getInstance().getAdminRoleId();
                     String mention = (adminRoleIdLocal != null && !adminRoleIdLocal.isEmpty()) ? "<@&" + adminRoleIdLocal + "> " : "";
                     hook.editOriginal(mention + "❌ ゲームサーバー連携エラー")
-                        .setEmbeds(EmbedTemplates.createDeleteResultEmbed(false,
+                        .setEmbeds(EmbedTemplates.createRemResultEmbed(false,
                             "通信エラーが発生しました: " + ex.getMessage() + "\n対象: " + targetStr,
                             true))
                             .setComponents()
@@ -240,7 +240,7 @@ public class AdminDeleteCommand extends ListenerAdapter {
         }
     }
 
-    private void deleteSelectedAccounts(net.dv8tion.jda.api.interactions.InteractionHook hook, String discordId,
+    private void remSelectedAccounts(net.dv8tion.jda.api.interactions.InteractionHook hook, String discordId,
             List<PlayerAccount> accounts, java.util.Set<Integer> selectedIndices) {
         CompletableFuture<?>[] futures = selectedIndices.stream()
                 .map(index -> {
@@ -274,7 +274,7 @@ public class AdminDeleteCommand extends ListenerAdapter {
                 String adminRoleId = BotConfig.getInstance().getAdminRoleId();
                 String mention = (adminRoleId != null && !adminRoleId.isEmpty() && hasServerError) ? "<@&" + adminRoleId + "> " : "";
                 hook.editOriginal(mention + "⚠️ 削除処理エラー")
-                    .setEmbeds(EmbedTemplates.createDeleteResultEmbed(
+                    .setEmbeds(EmbedTemplates.createRemResultEmbed(
                         false,
                         "一部またはすべてのアカウント削除処理に失敗しました。時間をおいて再試行してください。\n対象: ユーザー <@" + discordId + ">",
                         true)).setComponents().queue();
@@ -284,7 +284,7 @@ public class AdminDeleteCommand extends ListenerAdapter {
                     PlayerAccount acc = accounts.get(index);
                     sb.append("\n• `").append(acc.minecraftId).append("` (").append(acc.edition).append(")");
                 }
-                hook.editOriginalEmbeds(EmbedTemplates.createDeleteResultEmbed(
+                hook.editOriginalEmbeds(EmbedTemplates.createRemResultEmbed(
                         true,
                         sb.toString(),
                         true)).setComponents().queue();
@@ -301,7 +301,7 @@ public class AdminDeleteCommand extends ListenerAdapter {
             String adminRoleId = BotConfig.getInstance().getAdminRoleId();
             String mention = (adminRoleId != null && !adminRoleId.isEmpty()) ? "<@&" + adminRoleId + "> " : "";
             hook.editOriginal(mention + "❌ ゲームサーバー連携エラー")
-                .setEmbeds(EmbedTemplates.createDeleteResultEmbed(
+                .setEmbeds(EmbedTemplates.createRemResultEmbed(
                     false,
                     sb.toString(),
                     true)).setComponents().queue();

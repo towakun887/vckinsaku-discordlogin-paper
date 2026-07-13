@@ -103,11 +103,11 @@ public class AdminFlowHandler extends ListenerAdapter {
 
                 case "admin:search_help":
                     String searchHelp = "🔍 **プレイヤー検索ヘルプ**\n\n" +
-                            "特定のプレイヤー情報（紐づく全てのMinecraft IDとエディション）を検索・確認するには、管理者用削除コマンドを使用するのが最も簡単です。\n" +
+                            "特定のプレイヤー情報（紐づく全てのMinecraft IDとエディション）を検索・確認するには、管理者用-add/rem等のコマンドを使用するのが最も簡単です。\n" +
                             "以下のコマンドに確認したいプレイヤーの情報を入力して実行してください：\n" +
-                            "• " + CommandMentionHelper.getMention("server-admin-delete")
+                            "• " + CommandMentionHelper.getMention("server-admin-rem")
                             + " `minecraft_id:<確認したいID>`\n" +
-                            "• " + CommandMentionHelper.getMention("server-admin-delete")
+                            "• " + CommandMentionHelper.getMention("server-admin-rem")
                             + " `discord_user:<確認したいユーザーメンション>`\n\n" +
                             "コマンド実行後、確認画面が表示され、そこで対象のアカウント情報と紐付け状態を確認できます。\n" +
                             "確認だけが目的の場合は、削除を実行せずに **[❌ キャンセル]** ボタンを押せば、アカウントは削除されません。";
@@ -138,11 +138,11 @@ public class AdminFlowHandler extends ListenerAdapter {
                     String addHelp = "🏫 **新規大学追加手順**\n\n" +
                             "現在、新しい大学を登録するには、以下の方法で行えます：\n\n" +
                             "**スラッシュコマンド**\n" +
-                            "• " + CommandMentionHelper.getMention("server-university", "add")
+                            "• " + CommandMentionHelper.getMention("server-university-add")
                             + " コマンドを使用して、Discord 上から直接追加します。\n" +
-                            "• " + CommandMentionHelper.getMention("server-university", "rem")
+                            "• " + CommandMentionHelper.getMention("server-university-rem")
                             + " コマンドを使用して、Discord 上から削除します。\n" +
-                            "• " + CommandMentionHelper.getMention("server-university", "edit")
+                            "• " + CommandMentionHelper.getMention("server-university-edit")
                             + " コマンドを使用して、既存の大学情報 (名前、ロール、アイコンURL) を編集します。ロールの編集時は所属メンバーのDiscordロールも自動で更新されます。\n\n" +
                             "追加後、メニューからキャッシュのリロードを実行することで Bot 側の選択肢に即座に反映されます。";
 

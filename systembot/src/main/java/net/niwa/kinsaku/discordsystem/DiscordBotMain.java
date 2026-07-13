@@ -24,7 +24,8 @@ import net.niwa.kinsaku.discordsystem.util.CommandMentionHelper;
 import java.util.List;
 
 public class DiscordBotMain {
-    private static final java.util.concurrent.ScheduledExecutorService scheduler = java.util.concurrent.Executors.newScheduledThreadPool(1);
+    private static final java.util.concurrent.ScheduledExecutorService scheduler = java.util.concurrent.Executors
+            .newScheduledThreadPool(1);
 
     public static void main(String[] args) {
         System.out.println("DiscordBotSystem を起動しています...");
@@ -43,15 +44,17 @@ public class DiscordBotMain {
             JDA jda = JDABuilder.createDefault(token)
                     .enableIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MESSAGE_REACTIONS,
                             GatewayIntent.GUILD_MEMBERS)
-                    .setActivity(Activity.playing("全国VTuberサークル金策サバイバル"))
+                    .setActivity(Activity.playing("🏮全国VTuberサークル金策サバイバル"))
                     .addEventListeners(
                             new ServerSupportCommand(),
                             new SupportFlowHandler(apiClient),
                             new WhitelistAddCommand(apiClient),
-                            new WhitelistDeleteCommand(apiClient),
+                            new WhitelistRemCommand(apiClient),
                             new ServerAdminCommand(),
-                            new ServerUniversityCommand(apiClient),
-                            new AdminDeleteCommand(apiClient),
+                            new UniversityAddCommand(apiClient),
+                            new UniversityRemCommand(apiClient),
+                            new UniversityEditCommand(apiClient),
+                            new AdminRemCommand(apiClient),
                             new AdminFlowHandler(apiClient),
                             new UniversitySearchCommand(apiClient),
                             new PlayerSearchCommand(apiClient),
@@ -83,14 +86,15 @@ public class DiscordBotMain {
                                         net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent event) {
                                     if (event.getFocusedOption().getName().equals("university")) {
                                         String value = event.getFocusedOption().getValue().toLowerCase();
-                                        boolean isRemOrEdit = event.getName().equals("server-university")
-                                                && ("rem".equals(event.getSubcommandName()) || "edit".equals(event.getSubcommandName()));
+                                        boolean isRemOrEdit = event.getName().equals("server-university-rem")
+                                                || event.getName().equals("server-university-edit");
 
                                         java.util.List<net.dv8tion.jda.api.interactions.commands.Command.Choice> choices = apiClient
                                                 .getCachedUniversities().stream()
                                                 .filter(uni -> uni.name.toLowerCase().contains(value))
                                                 .map(uni -> {
-                                                    String choiceValue = isRemOrEdit ? String.valueOf(uni.id) : uni.name;
+                                                    String choiceValue = isRemOrEdit ? String.valueOf(uni.id)
+                                                            : uni.name;
                                                     return new net.dv8tion.jda.api.interactions.commands.Command.Choice(
                                                             uni.name, choiceValue);
                                                 })
@@ -126,7 +130,8 @@ public class DiscordBotMain {
             System.out.println("初期大学キャッシュをロードしました。件数: " + unis.size());
         }).exceptionally(ex -> {
             System.err.println("初期大学キャッシュのロードに失敗しました。APIサーバーに接続できないため30秒後に再試行します: " + ex.getMessage());
-            scheduler.schedule(() -> loadUniversityCacheWithRetry(apiClient), 30, java.util.concurrent.TimeUnit.SECONDS);
+            scheduler.schedule(() -> loadUniversityCacheWithRetry(apiClient), 30,
+                    java.util.concurrent.TimeUnit.SECONDS);
             return null;
         });
     }
@@ -150,15 +155,15 @@ public class DiscordBotMain {
         SlashCommandData addCmd = Commands.slash("server-whitelist-add", "ホワイトリストへ新規追加します")
                 .addOptions(uniOption, editionOption, mcIdOption);
 
-        SlashCommandData deleteCmd = Commands.slash("server-whitelist-delete", "登録している自分のホワイトリストを解除します");
+        SlashCommandData remCmd = Commands.slash("server-whitelist-rem", "登録している自分のホワイトリストを削除します");
 
         // 管理者用コマンドデータ定義
-        SlashCommandData adminCmd = Commands.slash("server-admin", "管理者用管理メニューを開きます")
+        SlashCommandData adminCmd = Commands.slash("server-admin", "(管理者) 管理者用管理メニューを開きます")
                 .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR));
 
         OptionData adminMcIdOpt = new OptionData(OptionType.STRING, "minecraft_id", "削除するMinecraft ID", false);
         OptionData adminUserOpt = new OptionData(OptionType.USER, "discord_user", "削除するDiscordユーザー", false);
-        SlashCommandData adminDeleteCmd = Commands.slash("server-admin-delete", "指定したアカウントのホワイトリスト登録を解除します")
+        SlashCommandData adminRemCmd = Commands.slash("server-admin-rem", "(管理者) 指定したアカウントのホワイトリスト登録を削除します")
                 .addOptions(adminMcIdOpt, adminUserOpt)
                 .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR));
 
@@ -167,23 +172,24 @@ public class DiscordBotMain {
                 .setAutoComplete(true);
 
         // 大学管理用コマンド定義
-        SlashCommandData universityCmd = Commands.slash("server-university", "大学情報を管理します（追加・削除・編集）")
-                .addSubcommands(
-                        new SubcommandData("add", "新規大学を追加します")
-                                .addOption(OptionType.STRING, "name", "大学名", true)
-                                .addOption(OptionType.ROLE, "role", "大学のDiscordロール", true)
-                                .addOption(OptionType.STRING, "icon_url", "大学のアイコンURL (オプション)", false),
-                        new SubcommandData("rem", "登録されている大学を削除します")
-                                .addOptions(remUniOption),
-                        new SubcommandData("edit", "登録されている大学の情報を編集します")
-                                .addOptions(
-                                        new OptionData(OptionType.STRING, "university", "編集する大学を選択してください", true).setAutoComplete(true),
-                                        new OptionData(OptionType.STRING, "field", "編集する項目", true)
-                                                .addChoice("名前", "name")
-                                                .addChoice("ロール", "role")
-                                                .addChoice("アイコンURL", "icon_url"),
-                                        new OptionData(OptionType.STRING, "new_value", "新しい値 (ロールの場合はメンションまたはID)", true)
-                                ))
+        SlashCommandData universityAddCmd = Commands.slash("server-university-add", "(管理者) 新規大学を追加します")
+                .addOption(OptionType.STRING, "name", "大学名", true)
+                .addOption(OptionType.ROLE, "role", "大学のDiscordロール", true)
+                .addOption(OptionType.STRING, "icon_url", "大学のアイコンURL (オプション)", false)
+                .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR));
+
+        SlashCommandData universityRemCmd = Commands.slash("server-university-rem", "(管理者) 登録されている大学を削除します")
+                .addOptions(remUniOption)
+                .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR));
+
+        SlashCommandData universityEditCmd = Commands.slash("server-university-edit", "(管理者) 登録されている大学の情報を編集します")
+                .addOptions(
+                        new OptionData(OptionType.STRING, "university", "編集する大学を選択してください", true).setAutoComplete(true),
+                        new OptionData(OptionType.STRING, "field", "編集する項目", true)
+                                .addChoice("名前", "name")
+                                .addChoice("ロール", "role")
+                                .addChoice("アイコンURL", "icon_url"),
+                        new OptionData(OptionType.STRING, "new_value", "新しい値 (ロールの場合はメンションまたはID)", true))
                 .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR));
 
         // 大学検索コマンド
@@ -201,8 +207,9 @@ public class DiscordBotMain {
 
         SlashCommandData serverListCmd = Commands.slash("server-list", "現在のオンラインプレイヤー一覧を表示します");
 
-        List<SlashCommandData> commandDataList = List.of(supportCmd, addCmd, deleteCmd, adminCmd, adminDeleteCmd,
-                universityCmd, universitySearchCmd, playerSearchByMinecraftCmd, playerSearchByDiscordCmd, serverListCmd);
+        List<SlashCommandData> commandDataList = List.of(supportCmd, addCmd, remCmd, adminCmd, adminRemCmd,
+                universityAddCmd, universityRemCmd, universityEditCmd, universitySearchCmd, playerSearchByMinecraftCmd,
+                playerSearchByDiscordCmd, serverListCmd);
 
         if (guildId != null && !guildId.isEmpty()) {
             Guild guild = jda.getGuildById(guildId);
@@ -263,7 +270,8 @@ public class DiscordBotMain {
                         System.out.println("DisplayNameの一括同期が完了しました。件数: " + nameUpdates.size() + ", 結果: " + success);
                     }).exceptionally(ex -> {
                         System.err.println("DisplayNameの一括同期API呼び出しでエラーが発生しました。30秒後に再試行します: " + ex.getMessage());
-                        scheduler.schedule(() -> syncDisplayNames(jda, apiClient, guildId), 30, java.util.concurrent.TimeUnit.SECONDS);
+                        scheduler.schedule(() -> syncDisplayNames(jda, apiClient, guildId), 30,
+                                java.util.concurrent.TimeUnit.SECONDS);
                         return null;
                     });
                 } else {
@@ -271,11 +279,13 @@ public class DiscordBotMain {
                 }
             }).onError(error -> {
                 System.err.println("Discordからのメンバー情報取得に失敗しました。30秒後に再試行します: " + error.getMessage());
-                scheduler.schedule(() -> syncDisplayNames(jda, apiClient, guildId), 30, java.util.concurrent.TimeUnit.SECONDS);
+                scheduler.schedule(() -> syncDisplayNames(jda, apiClient, guildId), 30,
+                        java.util.concurrent.TimeUnit.SECONDS);
             });
         }).exceptionally(ex -> {
             System.err.println("同期用のプレイヤー一覧取得に失敗しました。30秒後に再試行します: " + ex.getMessage());
-            scheduler.schedule(() -> syncDisplayNames(jda, apiClient, guildId), 30, java.util.concurrent.TimeUnit.SECONDS);
+            scheduler.schedule(() -> syncDisplayNames(jda, apiClient, guildId), 30,
+                    java.util.concurrent.TimeUnit.SECONDS);
             return null;
         });
     }

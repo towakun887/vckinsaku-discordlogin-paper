@@ -37,9 +37,13 @@ mvn clean package
 2. `.env` ファイル内の項目を設定します。
    - `DISCORD_BOT_TOKEN`: Discord Developer Portal から取得した Bot のトークン。
    - `DISCORD_GUILD_ID`: コマンドを即座に登録・反映する Discord サーバーの ID。
-   - `ADMIN_ROLE_ID`: `/server-admin` および `/server-admin-delete` などの管理コマンドを実行可能にする Discord ロール ID。
+   - `ADMIN_ROLE_ID`: `/server-admin` および各種管理コマンドを実行可能にする Discord ロール ID。
+   - `PLUGIN_API_URL`: Plugin の API サーバーの URL（デフォルト: `http://localhost:25580`）。
    - `PLUGIN_API_KEY`: 上記 Plugin 側の `config.yml` に設定した `api.key` と同一の文字列。
-   - `BOT_TEST_MODE`: `true` に設定すると、Minecraft サーバー（Plugin API）が動作していなくても、Bot単体ですべての機能（申請、自己削除、管理者メニュー、統計、リアクションUIなど）をモックデータを用いてテスト可能です（デフォルト: `false`）。
+   - `BOT_TEST_MODE`: `true` に設定すると、Minecraft サーバーが動作していなくても Bot 単体でモックデータを用いてテスト可能です（デフォルト: `false`）。
+   - `JAVA_SERVER_ADDRESS`: 接続先 Java 版サーバーのアドレス（任意）。
+   - `BEDROCK_SERVER_ADDRESS`: 接続先 統合版サーバーのアドレス（任意）。
+   - `BEDROCK_SERVER_PORT`: 接続先 統合版サーバーのポート（デフォルト: `19132`）。
 
 ### 4. 起動
 1. Minecraft サーバーを起動します（API サーバーが自動起動します）。
@@ -54,11 +58,16 @@ java -jar systembot/target/systembot-1.0-SNAPSHOT-shaded.jar
 ## 提供コマンド
 
 ### Discord スラッシュコマンド
-- `/server-support`: サーバー案内 Embed を表示します。ホワイトリスト追加および自己削除のコマンド案内が配置されています。
+- `/server-support`: サーバー案内 Embed を表示します。ホワイトリストの-add/rem等のコマンド案内が配置されています。
 - `/server-whitelist-add`: Minecraft アカウントをホワイトリストに追加します（大学、エディション、Minecraft ID を指定）。
-- `/server-whitelist-delete`: 自分の登録した Minecraft アカウントを選択してホワイトリストから解除します。
+- `/server-whitelist-rem`: 自分の登録した Minecraft アカウントを選択してホワイトリストから削除します。
 - `/server-admin`: 管理者メニュー（プルダウン型）を表示します（ロール制限あり）。
-- `/server-admin-delete`: 管理者用のホワイトリスト解除コマンド。Minecraft ID もしくは Discord メンションを指定して解除します。
+- `/server-admin-rem`: 管理者用のホワイトリスト削除コマンド。Minecraft ID もしくは Discord メンションを指定して削除します。
+- `/server-list`: 現在サーバーにログインしているオンラインプレイヤーの一覧と人数を表示します。
+- `/server-university-add`, `/server-university-rem`, `/server-university-edit`: 大学情報の追加・削除・編集を行う管理コマンド（ロール制限あり）。
+- `/university-search`: 大学名から該当するプレイヤーの一覧を検索して表示します。
+- `/player-search-by-discord`: Discordユーザーを指定して、そのユーザーに紐づくプレイヤー情報を検索します。
+- `/player-search-by-minecraft`: Minecraft IDを指定して、該当するプレイヤーの詳細情報を検索します。
 
 ### Minecraft ゲーム内コマンド（OP権限）
 - `/kinsaku-usersystem reload`: 設定ファイルおよび大学キャッシュのリロードを行います。

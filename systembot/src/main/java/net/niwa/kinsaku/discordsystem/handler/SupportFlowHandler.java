@@ -52,7 +52,7 @@ public class SupportFlowHandler extends ListenerAdapter {
                 case "support:whitelist_del":
                     builder.setDescription("🗑️ **ホワイトリストの登録解除手順**\n\n" +
                             "登録したアカウントの紐付けを解除したい場合は、以下の手順で行います。\n\n" +
-                            "1️⃣ " + CommandMentionHelper.getMention("server-whitelist-delete") + " コマンドを実行します。\n" +
+                            "1️⃣ " + CommandMentionHelper.getMention("server-whitelist-rem") + " コマンドを実行します。\n" +
                             "2️⃣ 送信されたアカウント選択画面で、解除したいアカウントの番号リアクション（1️⃣、2️⃣など）を押します。\n" +
                             "3️⃣ 最後に ✅ リアクションを押すことで、削除処理が実行されます。");
                     break;
