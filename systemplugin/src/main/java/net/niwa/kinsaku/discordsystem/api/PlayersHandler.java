@@ -14,6 +14,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import org.bukkit.entity.Player;
 
 public class PlayersHandler implements HttpHandler {
 
@@ -215,7 +218,7 @@ public class PlayersHandler implements HttpHandler {
 
                             // minecraftUuid (BE版はXUIDが格納されているため) からは直接UUIDへ変換できないため、名前からオフラインUUIDを再計算して処理する
                             UUID offlineUuid = UUID.nameUUIDFromBytes(
-                                    ("OfflinePlayer:" + targetName).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                                    ("OfflinePlayer:" + targetName).getBytes(StandardCharsets.UTF_8));
                             OfflinePlayer player = Bukkit.getOfflinePlayer(offlineUuid);
                             player.setWhitelisted(false);
                             Bukkit.reloadWhitelist();
@@ -304,7 +307,7 @@ public class PlayersHandler implements HttpHandler {
 
                                     // minecraftUuid (BE版はXUIDが格納されているため) からは直接UUIDへ変換できないため、名前からオフラインUUIDを再計算して処理する
                                     UUID offlineUuid = UUID.nameUUIDFromBytes(("OfflinePlayer:" + targetName)
-                                            .getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                                            .getBytes(StandardCharsets.UTF_8));
                                     OfflinePlayer player = Bukkit.getOfflinePlayer(offlineUuid);
                                     player.setWhitelisted(false);
                                 }
@@ -374,9 +377,9 @@ public class PlayersHandler implements HttpHandler {
 
     @SuppressWarnings("null") // online一覧を回すだけ
     private void handleGetOnlinePlayers(HttpExchange exchange) throws IOException {
-        java.util.Collection<? extends org.bukkit.entity.Player> online = Bukkit.getOnlinePlayers();
+        java.util.Collection<? extends Player> online = Bukkit.getOnlinePlayers();
         java.util.List<String> names = new java.util.ArrayList<>();
-        for (org.bukkit.entity.Player p : online) {
+        for (Player p : online) {
             names.add(p.getName());
         }
 
@@ -400,8 +403,8 @@ public class PlayersHandler implements HttpHandler {
     }
 
     private void handleUpdateNames(HttpExchange exchange) throws IOException {
-        try (java.io.InputStreamReader reader = new java.io.InputStreamReader(exchange.getRequestBody(),
-                java.nio.charset.StandardCharsets.UTF_8)) {
+        try (InputStreamReader reader = new InputStreamReader(exchange.getRequestBody(),
+                StandardCharsets.UTF_8)) {
             java.lang.reflect.Type listType = new com.google.gson.reflect.TypeToken<List<Map<String, String>>>() {
             }.getType();
             List<Map<String, String>> updates = gson.fromJson(reader, listType);

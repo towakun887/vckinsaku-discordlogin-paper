@@ -14,6 +14,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.lang.reflect.Type;
+import java.net.URLEncoder;
 
 public class PluginApiClient {
 
@@ -210,7 +212,7 @@ public class PluginApiClient {
         return httpClient.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
                 .thenApply(response -> {
                     if (response.statusCode() == 200) {
-                        java.lang.reflect.Type listType = new TypeToken<List<PlayerAccount>>() {
+                        Type listType = new TypeToken<List<PlayerAccount>>() {
                         }.getType();
                         return gson.fromJson(response.body(), listType);
                     }
@@ -228,14 +230,14 @@ public class PluginApiClient {
         }
 
         HttpRequest httpRequest = createRequestBuilder(
-                "/api/players/search?q=" + java.net.URLEncoder.encode(query, StandardCharsets.UTF_8))
+                "/api/players/search?q=" + URLEncoder.encode(query, StandardCharsets.UTF_8))
                 .GET()
                 .build();
 
         return httpClient.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
                 .thenApply(response -> {
                     if (response.statusCode() == 200) {
-                        java.lang.reflect.Type listType = new TypeToken<List<PlayerAccount>>() {
+                        Type listType = new TypeToken<List<PlayerAccount>>() {
                         }.getType();
                         return gson.fromJson(response.body(), listType);
                     }
@@ -254,11 +256,11 @@ public class PluginApiClient {
 
         StringBuilder query = new StringBuilder("?");
         if (university != null && !university.isEmpty()) {
-            query.append("university=").append(java.net.URLEncoder.encode(university, StandardCharsets.UTF_8))
+            query.append("university=").append(URLEncoder.encode(university, StandardCharsets.UTF_8))
                     .append("&");
         }
         if (edition != null && !edition.isEmpty()) {
-            query.append("edition=").append(java.net.URLEncoder.encode(edition, StandardCharsets.UTF_8)).append("&");
+            query.append("edition=").append(URLEncoder.encode(edition, StandardCharsets.UTF_8)).append("&");
         }
 
         HttpRequest httpRequest = createRequestBuilder("/api/players" + query)
@@ -268,7 +270,7 @@ public class PluginApiClient {
         return httpClient.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
                 .thenApply(response -> {
                     if (response.statusCode() == 200) {
-                        java.lang.reflect.Type listType = new TypeToken<List<PlayerAccount>>() {
+                        Type listType = new TypeToken<List<PlayerAccount>>() {
                         }.getType();
                         return gson.fromJson(response.body(), listType);
                     }
@@ -292,7 +294,7 @@ public class PluginApiClient {
         return httpClient.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
                 .thenApply(response -> {
                     if (response.statusCode() == 200) {
-                        java.lang.reflect.Type mapType = new TypeToken<Map<String, Object>>() {
+                        Type mapType = new TypeToken<Map<String, Object>>() {
                         }.getType();
                         return gson.fromJson(response.body(), mapType);
                     }
@@ -325,7 +327,7 @@ public class PluginApiClient {
         return httpClient.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
                 .thenApply(response -> {
                     if (response.statusCode() == 200) {
-                        java.lang.reflect.Type listType = new TypeToken<List<UniversityInfo>>() {
+                        Type listType = new TypeToken<List<UniversityInfo>>() {
                         }.getType();
                         List<UniversityInfo> list = gson.fromJson(response.body(), listType);
                         universityRoleMap.clear();
@@ -486,7 +488,7 @@ public class PluginApiClient {
         return httpClient.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
                 .thenApply(response -> {
                     if (response.statusCode() == 200) {
-                        java.lang.reflect.Type listType = new TypeToken<List<OnlinePlayerDetail>>() {
+                        Type listType = new TypeToken<List<OnlinePlayerDetail>>() {
                         }.getType();
                         return gson.fromJson(response.body(), listType);
                     }

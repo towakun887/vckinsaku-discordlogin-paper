@@ -11,6 +11,8 @@ import net.niwa.kinsaku.discordsystem.util.EmbedTemplates;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
+import net.dv8tion.jda.api.interactions.InteractionHook;
 
 public class PlayerSearchCommand extends ListenerAdapter {
 
@@ -77,7 +79,7 @@ public class PlayerSearchCommand extends ListenerAdapter {
                                 sendMinecraftPlayerInfoEmbed(hook, finalAdjustedMcId, adjustedAccounts);
                             } else {
                                 // 補正後も完全一致しなければ見つからなかった扱いにする
-                                sendMinecraftPlayerInfoEmbed(hook, finalAdjustedMcId, java.util.List.of());
+                                sendMinecraftPlayerInfoEmbed(hook, finalAdjustedMcId, List.of());
                             }
                         }).exceptionally(ex -> {
                             hook.editOriginalEmbeds(EmbedTemplates.createResultEmbed(
@@ -86,7 +88,7 @@ public class PlayerSearchCommand extends ListenerAdapter {
                             return null;
                         });
                     } else {
-                        sendMinecraftPlayerInfoEmbed(hook, mcId, java.util.List.of());
+                        sendMinecraftPlayerInfoEmbed(hook, mcId, List.of());
                     }
                 }).exceptionally(ex -> {
                     hook.editOriginalEmbeds(EmbedTemplates.createResultEmbed(
@@ -98,7 +100,7 @@ public class PlayerSearchCommand extends ListenerAdapter {
         });
     }
 
-    private void sendPlayerInfoEmbed(net.dv8tion.jda.api.interactions.InteractionHook hook, User user, List<PlayerAccount> accounts) {
+    private void sendPlayerInfoEmbed(InteractionHook hook, User user, List<PlayerAccount> accounts) {
         EmbedBuilder eb = EmbedTemplates.createBaseBuilder(false);
         eb.setAuthor(user.getName(), null, user.getEffectiveAvatarUrl());
 
@@ -140,7 +142,7 @@ public class PlayerSearchCommand extends ListenerAdapter {
         });
     }
 
-    private void sendMinecraftPlayerInfoEmbed(net.dv8tion.jda.api.interactions.InteractionHook hook, String queryId, List<PlayerAccount> foundAccounts) {
+    private void sendMinecraftPlayerInfoEmbed(InteractionHook hook, String queryId, List<PlayerAccount> foundAccounts) {
         if (foundAccounts == null || foundAccounts.isEmpty()) {
             hook.editOriginalEmbeds(EmbedTemplates.createResultEmbed(
                     false,
@@ -188,14 +190,14 @@ public class PlayerSearchCommand extends ListenerAdapter {
         }
 
         // 各 discordId に紐づく全アカウント情報を取得
-        List<java.util.concurrent.CompletableFuture<List<PlayerAccount>>> futures = discordIds.stream()
+        List<CompletableFuture<List<PlayerAccount>>> futures = discordIds.stream()
                 .map(apiClient::getPlayerInfo)
                 .collect(Collectors.toList());
 
-        java.util.concurrent.CompletableFuture.allOf(futures.toArray(new java.util.concurrent.CompletableFuture[0])).thenAccept(v -> {
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).thenAccept(v -> {
             List<PlayerAccount> allAccounts = new java.util.ArrayList<>();
             java.util.Map<Integer, PlayerAccount> accountMap = new java.util.HashMap<>();
-            for (java.util.concurrent.CompletableFuture<List<PlayerAccount>> future : futures) {
+            for (CompletableFuture<List<PlayerAccount>> future : futures) {
                 List<PlayerAccount> accs = future.join();
                 for (PlayerAccount acc : accs) {
                     accountMap.put(acc.id, acc);
@@ -224,7 +226,7 @@ public class PlayerSearchCommand extends ListenerAdapter {
         });
     }
 
-    private void buildMinecraftPlayerBody(net.dv8tion.jda.api.interactions.InteractionHook hook, EmbedBuilder eb, List<PlayerAccount> accounts) {
+    private void buildMinecraftPlayerBody(InteractionHook hook, EmbedBuilder eb, List<PlayerAccount> accounts) {
         // 重複を除去しながら所属を表示
         List<String> uniNames = accounts.stream()
                 .map(a -> a.universityName)

@@ -21,6 +21,10 @@ import net.niwa.kinsaku.discordsystem.handler.AdminFlowHandler;
 import net.niwa.kinsaku.discordsystem.handler.SupportFlowHandler;
 import net.niwa.kinsaku.discordsystem.util.CommandMentionHelper;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import net.dv8tion.jda.api.interactions.commands.Command;
 
 public class DiscordBotMain {
     private static final java.util.concurrent.ScheduledExecutorService scheduler = java.util.concurrent.Executors
@@ -58,7 +62,7 @@ public class DiscordBotMain {
                             new UniversitySearchCommand(apiClient),
                             new PlayerSearchCommand(apiClient),
                             new ServerListCommand(apiClient),
-                            new net.dv8tion.jda.api.hooks.ListenerAdapter() {
+                            new ListenerAdapter() {
                                 @Override
                                 public void onGuildMemberUpdateNickname(
                                         net.dv8tion.jda.api.events.guild.member.update.GuildMemberUpdateNicknameEvent event) {
@@ -67,7 +71,7 @@ public class DiscordBotMain {
                                     boolean hasRole = member.getRoles().stream()
                                             .anyMatch(role -> role.getId().equals(whitelistedRoleId));
                                     if (hasRole) {
-                                        java.util.Map<String, String> update = new java.util.HashMap<>();
+                                        Map<String, String> update = new HashMap<>();
                                         update.put("discord_id", member.getId());
                                         update.put("discord_username", member.getEffectiveName());
                                         apiClient.updateDiscordNames(List.of(update)).thenAccept(success -> {
@@ -79,7 +83,7 @@ public class DiscordBotMain {
                                     }
                                 }
                             },
-                            new net.dv8tion.jda.api.hooks.ListenerAdapter() {
+                            new ListenerAdapter() {
                                 @Override
                                 public void onCommandAutoCompleteInteraction(
                                         net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent event) {
@@ -88,13 +92,13 @@ public class DiscordBotMain {
                                         boolean isRemOrEdit = event.getName().equals("server-university-rem")
                                                 || event.getName().equals("server-university-edit");
 
-                                        java.util.List<net.dv8tion.jda.api.interactions.commands.Command.Choice> choices = apiClient
+                                        List<Command.Choice> choices = apiClient
                                                 .getCachedUniversities().stream()
                                                 .filter(uni -> uni.name.toLowerCase().contains(value))
                                                 .map(uni -> {
                                                     String choiceValue = isRemOrEdit ? String.valueOf(uni.id)
                                                             : uni.name;
-                                                    return new net.dv8tion.jda.api.interactions.commands.Command.Choice(
+                                                    return new Command.Choice(
                                                             uni.name, choiceValue);
                                                 })
                                                 .limit(25)
@@ -130,7 +134,7 @@ public class DiscordBotMain {
         }).exceptionally(ex -> {
             System.err.println("初期大学キャッシュのロードに失敗しました。APIサーバーに接続できないため30秒後に再試行します: " + ex.getMessage());
             scheduler.schedule(() -> loadUniversityCacheWithRetry(apiClient), 30,
-                    java.util.concurrent.TimeUnit.SECONDS);
+                    TimeUnit.SECONDS);
             return null;
         });
     }
@@ -257,9 +261,9 @@ public class DiscordBotMain {
             System.out.println("同期対象のDiscord ID数: " + discordIds.size() + " 件。Discordから最新情報を取得中...");
 
             guild.retrieveMembersByIds(discordIds.toArray(new String[0])).onSuccess(members -> {
-                java.util.List<java.util.Map<String, String>> nameUpdates = new java.util.ArrayList<>();
+                List<Map<String, String>> nameUpdates = new java.util.ArrayList<>();
                 for (Member member : members) {
-                    java.util.Map<String, String> update = new java.util.HashMap<>();
+                    Map<String, String> update = new HashMap<>();
                     update.put("discord_id", member.getId());
                     update.put("discord_username", member.getEffectiveName());
                     nameUpdates.add(update);
@@ -270,7 +274,7 @@ public class DiscordBotMain {
                     }).exceptionally(ex -> {
                         System.err.println("DisplayNameの一括同期API呼び出しでエラーが発生しました。30秒後に再試行します: " + ex.getMessage());
                         scheduler.schedule(() -> syncDisplayNames(jda, apiClient, guildId), 30,
-                                java.util.concurrent.TimeUnit.SECONDS);
+                                TimeUnit.SECONDS);
                         return null;
                     });
                 } else {
@@ -279,12 +283,12 @@ public class DiscordBotMain {
             }).onError(error -> {
                 System.err.println("Discordからのメンバー情報取得に失敗しました。30秒後に再試行します: " + error.getMessage());
                 scheduler.schedule(() -> syncDisplayNames(jda, apiClient, guildId), 30,
-                        java.util.concurrent.TimeUnit.SECONDS);
+                        TimeUnit.SECONDS);
             });
         }).exceptionally(ex -> {
             System.err.println("同期用のプレイヤー一覧取得に失敗しました。30秒後に再試行します: " + ex.getMessage());
             scheduler.schedule(() -> syncDisplayNames(jda, apiClient, guildId), 30,
-                    java.util.concurrent.TimeUnit.SECONDS);
+                    TimeUnit.SECONDS);
             return null;
         });
     }

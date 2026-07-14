@@ -9,12 +9,13 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.niwa.kinsaku.discordsystem.command.ServerSupportCommand;
 import net.niwa.kinsaku.discordsystem.util.CommandMentionHelper;
 import net.niwa.kinsaku.discordsystem.api.PluginApiClient;
+import net.niwa.kinsaku.discordsystem.config.BotConfig;
 
 public class SupportFlowHandler extends ListenerAdapter {
 
-    private final net.niwa.kinsaku.discordsystem.api.PluginApiClient apiClient;
+    private final PluginApiClient apiClient;
 
-    public SupportFlowHandler(net.niwa.kinsaku.discordsystem.api.PluginApiClient apiClient) {
+    public SupportFlowHandler(PluginApiClient apiClient) {
         this.apiClient = apiClient;
     }
 
@@ -58,7 +59,7 @@ public class SupportFlowHandler extends ListenerAdapter {
                     break;
 
                 case "support:server_info":
-                    net.niwa.kinsaku.discordsystem.config.BotConfig botConfig = net.niwa.kinsaku.discordsystem.config.BotConfig.getInstance();
+                    BotConfig botConfig = BotConfig.getInstance();
                     builder.setDescription("🎮 **サーバー接続情報 & アドレス**\n\n" +
                             "サーバーへ接続するためのアドレスおよびポート情報は以下の通りです。\n\n" +
                             "💻 **Java Edition**\n" +

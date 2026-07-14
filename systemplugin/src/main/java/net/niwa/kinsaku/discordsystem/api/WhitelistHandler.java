@@ -16,6 +16,8 @@ import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 public class WhitelistHandler implements HttpHandler {
 
@@ -276,14 +278,14 @@ public class WhitelistHandler implements HttpHandler {
 
     private String getMojangUuid(String username) {
         try {
-            java.net.URL url = new java.net.URL("https://api.mojang.com/users/profiles/minecraft/" + username);
-            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+            URL url = new URL("https://api.mojang.com/users/profiles/minecraft/" + username);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
             conn.setConnectTimeout(5000);
             conn.setReadTimeout(5000);
 
             if (conn.getResponseCode() == 200) {
-                try (java.io.InputStreamReader reader = new java.io.InputStreamReader(conn.getInputStream(),
+                try (InputStreamReader reader = new InputStreamReader(conn.getInputStream(),
                         StandardCharsets.UTF_8)) {
                     JsonObject json = gson.fromJson(reader, JsonObject.class);
                     if (json != null && json.has("id")) {
@@ -305,14 +307,14 @@ public class WhitelistHandler implements HttpHandler {
         try {
             String encoded = java.net.URLEncoder.encode(gamertag, StandardCharsets.UTF_8.toString()).replace("+",
                     "%20");
-            java.net.URL url = new java.net.URL("https://api.geysermc.org/v2/xbox/xuid/" + encoded);
-            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+            URL url = new URL("https://api.geysermc.org/v2/xbox/xuid/" + encoded);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
             conn.setConnectTimeout(5000);
             conn.setReadTimeout(5000);
 
             if (conn.getResponseCode() == 200) {
-                try (java.io.InputStreamReader reader = new java.io.InputStreamReader(conn.getInputStream(),
+                try (InputStreamReader reader = new InputStreamReader(conn.getInputStream(),
                         StandardCharsets.UTF_8)) {
                     JsonObject json = gson.fromJson(reader, JsonObject.class);
                     if (json != null && json.has("xuid")) {

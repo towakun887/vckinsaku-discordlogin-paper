@@ -11,6 +11,7 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.Map;
 
 public class ApiServer {
 
@@ -142,8 +143,8 @@ public class ApiServer {
     /**
      * クエリパラメータを解析するユーティリティメソッド。
      */
-    public static java.util.Map<String, String> parseQueryParams(String query) {
-        java.util.Map<String, String> params = new java.util.HashMap<>();
+    public static Map<String, String> parseQueryParams(String query) {
+        Map<String, String> params = new java.util.HashMap<>();
         if (query == null || query.isEmpty()) {
             return params;
         }

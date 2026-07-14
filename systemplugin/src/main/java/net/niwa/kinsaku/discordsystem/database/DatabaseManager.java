@@ -650,11 +650,11 @@ public class DatabaseManager {
         return stats;
     }
 
-    public synchronized void updateDiscordUsernames(List<java.util.Map<String, String>> updates) throws SQLException {
+    public synchronized void updateDiscordUsernames(List<Map<String, String>> updates) throws SQLException {
         String sql = "UPDATE discord_users SET discord_username = ? WHERE discord_id = ?;";
         connection.setAutoCommit(false);
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            for (java.util.Map<String, String> update : updates) {
+            for (Map<String, String> update : updates) {
                 String discordId = update.get("discord_id");
                 String username = update.get("discord_username");
                 if (discordId != null && username != null) {

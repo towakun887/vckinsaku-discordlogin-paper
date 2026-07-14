@@ -5,6 +5,7 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.niwa.kinsaku.discordsystem.api.PluginApiClient;
 import net.niwa.kinsaku.discordsystem.model.WhitelistRequest;
 import net.niwa.kinsaku.discordsystem.util.EmbedTemplates;
+import net.niwa.kinsaku.discordsystem.config.BotConfig;
 
 public class WhitelistAddCommand extends ListenerAdapter {
 
@@ -35,13 +36,13 @@ public class WhitelistAddCommand extends ListenerAdapter {
                      apiClient.addToWhitelist(request).thenAccept(response -> {
                          if (response.isSuccess()) {
                              // 成功時にホワイトリストロールを付与
-                             String roleId = net.niwa.kinsaku.discordsystem.config.BotConfig.getInstance().getWhitelistedRoleId();
+                             String roleId = BotConfig.getInstance().getWhitelistedRoleId();
                              if (roleId != null && !roleId.isEmpty() && event.getGuild() != null && event.getMember() != null) {
                                  net.dv8tion.jda.api.entities.Role role = event.getGuild().getRoleById(roleId);
                                  if (role != null) {
                                      java.util.function.Consumer<Throwable> errorHandler = e -> {
                                          System.err.println("ロール付与に失敗しました: " + e.getMessage());
-                                         String adminRoleId = net.niwa.kinsaku.discordsystem.config.BotConfig.getInstance().getAdminRoleId();
+                                         String adminRoleId = BotConfig.getInstance().getAdminRoleId();
                                          String mention = (adminRoleId != null && !adminRoleId.isEmpty()) ? "<@&" + adminRoleId + "> " : "";
                                          hook.editOriginal(mention + "⚠️ Discord連携（ロール付与）に失敗しました。")
                                              .setEmbeds(EmbedTemplates.createResultEmbed(
@@ -83,7 +84,7 @@ public class WhitelistAddCommand extends ListenerAdapter {
                                      || errorMsg.startsWith("[ERR_PLAYER_DUPLICATE]")
                                      || errorMsg.startsWith("[ERR_MC_ID_DUPLICATE]")
                                      || errorMsg.startsWith("[ERR_MC_NOT_FOUND]");
-                             String adminRoleId = net.niwa.kinsaku.discordsystem.config.BotConfig.getInstance().getAdminRoleId();
+                             String adminRoleId = BotConfig.getInstance().getAdminRoleId();
                              String mention = (adminRoleId != null && !adminRoleId.isEmpty() && !isUserError) ? "<@&" + adminRoleId + "> " : "";
                              hook.editOriginal(mention + "❌ 登録エラー")
                                  .setEmbeds(EmbedTemplates.createFailureEmbed(university, edition, minecraftId, errorMsg))
@@ -91,7 +92,7 @@ public class WhitelistAddCommand extends ListenerAdapter {
                          }
                      }).exceptionally(ex -> {
                          // 通信エラー時などのハンドリング
-                         String adminRoleId = net.niwa.kinsaku.discordsystem.config.BotConfig.getInstance().getAdminRoleId();
+                         String adminRoleId = BotConfig.getInstance().getAdminRoleId();
                          String mention = (adminRoleId != null && !adminRoleId.isEmpty()) ? "<@&" + adminRoleId + "> " : "";
                          hook.editOriginal(mention + "❌ ゲームサーバー連携エラー")
                              .setEmbeds(EmbedTemplates.createFailureEmbed(

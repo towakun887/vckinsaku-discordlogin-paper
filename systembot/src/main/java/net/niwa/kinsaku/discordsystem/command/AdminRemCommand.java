@@ -15,6 +15,7 @@ import net.niwa.kinsaku.discordsystem.util.EmbedTemplates;
 import net.niwa.kinsaku.discordsystem.util.ReactionSelectHelper;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import net.niwa.kinsaku.discordsystem.util.WhitelistRoleHelper;
 
 public class AdminRemCommand extends ListenerAdapter {
 
@@ -203,7 +204,7 @@ public class AdminRemCommand extends ListenerAdapter {
                                     }
                                 });
                         if (!discordId.isEmpty()) {
-                            net.niwa.kinsaku.discordsystem.util.WhitelistRoleHelper.checkAndRemoveRole(apiClient,
+                            WhitelistRoleHelper.checkAndRemoveRole(apiClient,
                                     hook.getJDA(), discordId, hook);
                         }
                     } else {
@@ -313,7 +314,7 @@ public class AdminRemCommand extends ListenerAdapter {
                         sb.toString(),
                         true)).setComponents().queue();
 
-                net.niwa.kinsaku.discordsystem.util.WhitelistRoleHelper.checkAndRemoveRole(apiClient, hook.getJDA(),
+                WhitelistRoleHelper.checkAndRemoveRole(apiClient, hook.getJDA(),
                         discordId, hook);
             }
         }).exceptionally(ex -> {

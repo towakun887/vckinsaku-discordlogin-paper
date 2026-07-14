@@ -9,6 +9,7 @@ import net.niwa.kinsaku.discordsystem.util.EmbedTemplates;
 import net.niwa.kinsaku.discordsystem.util.ReactionSelectHelper;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import net.niwa.kinsaku.discordsystem.config.BotConfig;
 
 public class WhitelistRemCommand extends ListenerAdapter {
 
@@ -112,7 +113,7 @@ public class WhitelistRemCommand extends ListenerAdapter {
             }
 
             if (anyFailed) {
-                String adminRoleId = net.niwa.kinsaku.discordsystem.config.BotConfig.getInstance().getAdminRoleId();
+                String adminRoleId = BotConfig.getInstance().getAdminRoleId();
                 String mention = (adminRoleId != null && !adminRoleId.isEmpty() && hasServerError)
                         ? "<@&" + adminRoleId + "> "
                         : "";
@@ -132,7 +133,7 @@ public class WhitelistRemCommand extends ListenerAdapter {
                         discordId, hook);
             }
         }).exceptionally(ex -> {
-            String adminRoleId = net.niwa.kinsaku.discordsystem.config.BotConfig.getInstance().getAdminRoleId();
+            String adminRoleId = BotConfig.getInstance().getAdminRoleId();
             String mention = (adminRoleId != null && !adminRoleId.isEmpty()) ? "<@&" + adminRoleId + "> " : "";
             hook.editOriginal(mention + "❌ ゲームサーバー連携エラー")
                     .setEmbeds(EmbedTemplates.createRemResultEmbed(

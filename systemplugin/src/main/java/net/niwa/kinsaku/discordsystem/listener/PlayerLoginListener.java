@@ -8,6 +8,12 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import java.sql.SQLException;
 import java.util.concurrent.CompletableFuture;
+import java.util.ArrayList;
+import java.util.List;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TranslationArgument;
+import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.entity.Player;
 
 public class PlayerLoginListener implements Listener {
 
@@ -21,7 +27,7 @@ public class PlayerLoginListener implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        org.bukkit.entity.Player player = event.getPlayer();
+        Player player = event.getPlayer();
         String playerName = player.getName();
 
         try {
@@ -52,41 +58,41 @@ public class PlayerLoginListener implements Listener {
             plugin.getLogger().warning("ログインイベント処理中にDBエラーが発生しました: " + e.getMessage());
         }
 
-        net.kyori.adventure.text.Component customName = getCustomName(player);
+        Component customName = getCustomName(player);
         if (customName != null) {
             player.displayName(customName);
             player.playerListName(customName);
 
-            net.kyori.adventure.text.Component joinMsg = customName
-                    .append(net.kyori.adventure.text.Component.text(" がサーバーに参加しました。"));
+            Component joinMsg = customName
+                    .append(Component.text(" がサーバーに参加しました。"));
             event.joinMessage(joinMsg);
         }
     }
 
     @EventHandler
     public void onPlayerQuit(org.bukkit.event.player.PlayerQuitEvent event) {
-        org.bukkit.entity.Player player = event.getPlayer();
-        net.kyori.adventure.text.Component customName = getCustomName(player);
+        Player player = event.getPlayer();
+        Component customName = getCustomName(player);
         if (customName != null) {
-            net.kyori.adventure.text.Component quitMsg = customName
-                    .append(net.kyori.adventure.text.Component.text(" がサーバーを退出しました。"));
+            Component quitMsg = customName
+                    .append(Component.text(" がサーバーを退出しました。"));
             event.quitMessage(quitMsg);
         }
     }
 
     @EventHandler
     public void onPlayerDeath(org.bukkit.event.entity.PlayerDeathEvent event) {
-        org.bukkit.entity.Player player = event.getEntity();
-        net.kyori.adventure.text.Component customName = getCustomName(player);
-        net.kyori.adventure.text.Component deathMsg = event.deathMessage();
+        Player player = event.getEntity();
+        Component customName = getCustomName(player);
+        Component deathMsg = event.deathMessage();
         if (deathMsg != null) {
-            net.kyori.adventure.text.Component updatedMsg = deathMsg;
+            Component updatedMsg = deathMsg;
             if (customName != null) {
                 updatedMsg = replacePlayerNameSafely(updatedMsg, player, customName);
             }
-            org.bukkit.entity.Player killer = player.getKiller();
+            Player killer = player.getKiller();
             if (killer != null) {
-                net.kyori.adventure.text.Component killerCustomName = getCustomName(killer);
+                Component killerCustomName = getCustomName(killer);
                 if (killerCustomName != null) {
                     updatedMsg = replacePlayerNameSafely(updatedMsg, killer, killerCustomName);
                 }
@@ -97,16 +103,16 @@ public class PlayerLoginListener implements Listener {
 
     @EventHandler
     public void onPlayerAdvancementDone(org.bukkit.event.player.PlayerAdvancementDoneEvent event) {
-        org.bukkit.entity.Player player = event.getPlayer();
-        net.kyori.adventure.text.Component customName = getCustomName(player);
-        net.kyori.adventure.text.Component msg = event.message();
+        Player player = event.getPlayer();
+        Component customName = getCustomName(player);
+        Component msg = event.message();
         if (msg != null && customName != null) {
             event.message(replacePlayerNameSafely(msg, player, customName));
         }
     }
 
-    private net.kyori.adventure.text.Component replacePlayerNameSafely(net.kyori.adventure.text.Component comp,
-            org.bukkit.entity.Player targetPlayer, net.kyori.adventure.text.Component replacement) {
+    private Component replacePlayerNameSafely(Component comp,
+            Player targetPlayer, Component replacement) {
         if (comp == null || replacement == null) return comp;
 
         // 1. 確実な判定: HoverEvent が ShowEntity であり、対象プレイヤーのUUIDと一致する場合は丸ごと置換
@@ -129,15 +135,15 @@ public class PlayerLoginListener implements Listener {
         }
 
         // 3. 子要素や引数を再帰的に探索して置換する
-        net.kyori.adventure.text.Component result = comp;
+        Component result = comp;
         
         if (result instanceof net.kyori.adventure.text.TranslatableComponent tc) {
-            java.util.List<net.kyori.adventure.text.TranslationArgument> newArgs = new java.util.ArrayList<>();
+            List<TranslationArgument> newArgs = new ArrayList<>();
             boolean changed = false;
-            for (net.kyori.adventure.text.TranslationArgument arg : tc.arguments()) {
-                if (arg.value() instanceof net.kyori.adventure.text.Component argComp) {
-                    net.kyori.adventure.text.Component newArgComp = replacePlayerNameSafely(argComp, targetPlayer, replacement);
-                    newArgs.add(net.kyori.adventure.text.TranslationArgument.component(newArgComp));
+            for (TranslationArgument arg : tc.arguments()) {
+                if (arg.value() instanceof Component argComp) {
+                    Component newArgComp = replacePlayerNameSafely(argComp, targetPlayer, replacement);
+                    newArgs.add(TranslationArgument.component(newArgComp));
                     if (newArgComp != argComp) changed = true;
                 } else {
                     newArgs.add(arg);
@@ -149,10 +155,10 @@ public class PlayerLoginListener implements Listener {
         }
 
         if (!result.children().isEmpty()) {
-            java.util.List<net.kyori.adventure.text.Component> newChildren = new java.util.ArrayList<>();
+            List<Component> newChildren = new ArrayList<>();
             boolean changed = false;
-            for (net.kyori.adventure.text.Component child : result.children()) {
-                net.kyori.adventure.text.Component newChild = replacePlayerNameSafely(child, targetPlayer, replacement);
+            for (Component child : result.children()) {
+                Component newChild = replacePlayerNameSafely(child, targetPlayer, replacement);
                 newChildren.add(newChild);
                 if (newChild != child) changed = true;
             }
@@ -164,7 +170,7 @@ public class PlayerLoginListener implements Listener {
         return result;
     }
 
-    private net.kyori.adventure.text.Component getCustomName(org.bukkit.entity.Player player) {
+    private Component getCustomName(Player player) {
         String playerName = player.getName();
         try {
             MinecraftAccount account = dbManager.getAccountByMinecraftId(playerName);
@@ -188,23 +194,23 @@ public class PlayerLoginListener implements Listener {
                         isBedrock = true;
                     }
 
-                    net.kyori.adventure.text.Component editionBadge;
+                    Component editionBadge;
                     if (isBedrock) {
-                        editionBadge = net.kyori.adventure.text.Component.text("(BE)")
+                        editionBadge = Component.text("(BE)")
                                 .color(net.kyori.adventure.text.format.NamedTextColor.DARK_GREEN);
                     } else {
-                        editionBadge = net.kyori.adventure.text.Component.text("(JE)")
+                        editionBadge = Component.text("(JE)")
                                 .color(net.kyori.adventure.text.format.NamedTextColor.DARK_RED);
                     }
 
-                    return net.kyori.adventure.text.Component
+                    return Component
                             .text(user.discordUsername)
-                            .append(net.kyori.adventure.text.Component.text(" (")
-                                    .color(net.kyori.adventure.text.format.NamedTextColor.GRAY))
-                            .append(net.kyori.adventure.text.Component.text(displayPlayerName)
-                                    .color(net.kyori.adventure.text.format.NamedTextColor.GRAY))
-                            .append(net.kyori.adventure.text.Component.text(")")
-                                    .color(net.kyori.adventure.text.format.NamedTextColor.GRAY))
+                            .append(Component.text(" (")
+                                    .color(NamedTextColor.GRAY))
+                            .append(Component.text(displayPlayerName)
+                                    .color(NamedTextColor.GRAY))
+                            .append(Component.text(")")
+                                    .color(NamedTextColor.GRAY))
                             .append(editionBadge);
                 }
             }
@@ -246,7 +252,7 @@ public class PlayerLoginListener implements Listener {
             if (!event.isWhitelisted()) {
                 String msg = plugin.getWhitelistKickMessage();
                 if (msg != null && !msg.isEmpty()) {
-                    event.kickMessage(net.kyori.adventure.text.Component.text(msg));
+                    event.kickMessage(Component.text(msg));
                 }
             }
         }
