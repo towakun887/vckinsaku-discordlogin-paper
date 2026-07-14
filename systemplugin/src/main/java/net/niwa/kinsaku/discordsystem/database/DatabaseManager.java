@@ -369,18 +369,36 @@ public class DatabaseManager {
     // --- Minecraftアカウント管理メソッド ---
 
     public synchronized boolean addMinecraftAccount(int discordUserId, String minecraftId, String minecraftUuid, String edition) throws SQLException {
-        // 重複チェック（アクティブなもので同じ minecraft_id + edition）
-        String checkSql = "SELECT id FROM minecraft_accounts WHERE minecraft_id = ? AND edition = ? AND is_active = 1;";
+        // 重複チェック及び既存レコード取得（同じ minecraft_id + edition）
+        String checkSql = "SELECT id, is_active FROM minecraft_accounts WHERE minecraft_id = ? AND edition = ?;";
+        int inactiveId = -1;
         try (PreparedStatement pstmt = connection.prepareStatement(checkSql)) {
             pstmt.setString(1, minecraftId);
             pstmt.setString(2, edition);
             try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    return false; // すでに登録されている
+                while (rs.next()) {
+                    boolean isActive = rs.getBoolean("is_active");
+                    if (isActive) {
+                        return false; // すでにアクティブなアカウントが存在する
+                    }
+                    inactiveId = rs.getInt("id"); // 非アクティブなレコードのIDを保持
                 }
             }
         }
 
+        if (inactiveId != -1) {
+            // 非アクティブな既存レコードを再アクティブ化
+            String updateSql = "UPDATE minecraft_accounts SET discord_user_id = ?, minecraft_uuid = ?, is_active = 1, registered_at = CURRENT_TIMESTAMP WHERE id = ?;";
+            try (PreparedStatement pstmt = connection.prepareStatement(updateSql)) {
+                pstmt.setInt(1, discordUserId);
+                pstmt.setString(2, minecraftUuid);
+                pstmt.setInt(3, inactiveId);
+                pstmt.executeUpdate();
+                return true;
+            }
+        }
+
+        // 新規追加
         String insertSql = "INSERT INTO minecraft_accounts (discord_user_id, minecraft_id, minecraft_uuid, edition) VALUES (?, ?, ?, ?);";
         try (PreparedStatement pstmt = connection.prepareStatement(insertSql)) {
             pstmt.setInt(1, discordUserId);
@@ -464,6 +482,36 @@ public class DatabaseManager {
         }
         return null;
     }
+
+    public synchronized MinecraftAccount getAccountById(int id) throws SQLException {
+        String sql = "SELECT ma.*, du.discord_id, u.name as university_name " +
+                "FROM minecraft_accounts ma " +
+                "JOIN discord_users du ON ma.discord_user_id = du.id " +
+                "JOIN universities u ON du.university_id = u.id " +
+                "WHERE ma.id = ? AND ma.is_active = 1;";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return new MinecraftAccount(
+                            rs.getInt("id"),
+                            rs.getInt("discord_user_id"),
+                            rs.getString("discord_id"),
+                            rs.getString("university_name"),
+                            rs.getString("minecraft_id"),
+                            rs.getString("minecraft_uuid"),
+                            rs.getString("edition"),
+                            rs.getString("registered_at"),
+                            rs.getString("lastlogin_at"),
+                            rs.getBoolean("is_active")
+                    );
+                }
+            }
+        }
+        return null;
+    }
+
+
 
     public synchronized List<MinecraftAccount> searchAccounts(String query) throws SQLException {
         List<MinecraftAccount> list = new ArrayList<>();

@@ -4,6 +4,7 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.niwa.kinsaku.discordsystem.api.PluginApiClient;
 import net.niwa.kinsaku.discordsystem.api.PluginApiClient.PlayerAccount;
+import net.niwa.kinsaku.discordsystem.model.WhitelistResponse;
 import net.niwa.kinsaku.discordsystem.util.EmbedTemplates;
 import net.niwa.kinsaku.discordsystem.util.ReactionSelectHelper;
 import java.util.List;
@@ -80,48 +81,64 @@ public class WhitelistRemCommand extends ListenerAdapter {
         CompletableFuture.allOf(futures).thenRun(() -> {
             boolean hasServerError = false;
             boolean anyFailed = false;
+            java.util.List<String> errorMessages = new java.util.ArrayList<>();
             for (CompletableFuture<?> f : futures) {
                 try {
                     Object result = f.join();
-                    if (result instanceof Integer) {
-                        int status = (Integer) result;
-                        if (status != 200) {
+                    if (result instanceof WhitelistResponse) {
+                        WhitelistResponse resp = (WhitelistResponse) result;
+                        if (!resp.isSuccess()) {
                             anyFailed = true;
-                            if (status >= 500) {
+                            if (resp.getError() != null && resp.getError().startsWith("HTTP 5")) {
                                 hasServerError = true;
+                            }
+                            String msg = resp.getMessage();
+                            if (msg != null && !msg.isEmpty() && !errorMessages.contains(msg)) {
+                                errorMessages.add(msg);
                             }
                         }
                     }
                 } catch (Exception e) {
                     anyFailed = true;
                     hasServerError = true;
+                    String msg = e.getMessage();
+                    if (e.getCause() != null && e.getCause().getMessage() != null) {
+                        msg = e.getCause().getMessage();
+                    }
+                    if (msg != null && !msg.isEmpty() && !errorMessages.contains(msg)) {
+                        errorMessages.add(msg);
+                    }
                 }
             }
 
             if (anyFailed) {
                 String adminRoleId = net.niwa.kinsaku.discordsystem.config.BotConfig.getInstance().getAdminRoleId();
-                String mention = (adminRoleId != null && !adminRoleId.isEmpty() && hasServerError) ? "<@&" + adminRoleId + "> " : "";
+                String mention = (adminRoleId != null && !adminRoleId.isEmpty() && hasServerError)
+                        ? "<@&" + adminRoleId + "> "
+                        : "";
+                String errorMessageText = errorMessages.isEmpty() ? "" : "\nエラー内容: " + String.join(", ", errorMessages);
                 hook.editOriginal(mention + "⚠️ 削除処理エラー")
-                    .setEmbeds(EmbedTemplates.createRemResultEmbed(
-                        false,
-                        "一部またはすべてのアカウント削除処理に失敗しました。時間をおいて再試行してください。"))
-                    .queue();
+                        .setEmbeds(EmbedTemplates.createRemResultEmbed(
+                                false,
+                                "一部またはすべてのアカウント削除処理に失敗しました。時間をおいて再試行してください。" + errorMessageText))
+                        .queue();
             } else {
                 hook.editOriginalEmbeds(EmbedTemplates.createRemResultEmbed(
                         true,
                         "選択した Minecraft アカウントの登録解除処理が完了しました。")).queue();
-                
+
                 // アカウントが0になったかチェックしてロールを外す
-                net.niwa.kinsaku.discordsystem.util.WhitelistRoleHelper.checkAndRemoveRole(apiClient, hook.getJDA(), discordId, hook);
+                net.niwa.kinsaku.discordsystem.util.WhitelistRoleHelper.checkAndRemoveRole(apiClient, hook.getJDA(),
+                        discordId, hook);
             }
         }).exceptionally(ex -> {
             String adminRoleId = net.niwa.kinsaku.discordsystem.config.BotConfig.getInstance().getAdminRoleId();
             String mention = (adminRoleId != null && !adminRoleId.isEmpty()) ? "<@&" + adminRoleId + "> " : "";
             hook.editOriginal(mention + "❌ ゲームサーバー連携エラー")
-                .setEmbeds(EmbedTemplates.createRemResultEmbed(
-                    false,
-                    "一部またはすべてのアカウント削除処理に失敗しました。サーバーが起動していない可能性があります。\nエラー内容: " + ex.getMessage()))
-                .queue();
+                    .setEmbeds(EmbedTemplates.createRemResultEmbed(
+                            false,
+                            "一部またはすべてのアカウント削除処理に失敗しました。サーバーが起動していない可能性があります。\nエラー内容: " + ex.getMessage()))
+                    .queue();
             return null;
         });
     }

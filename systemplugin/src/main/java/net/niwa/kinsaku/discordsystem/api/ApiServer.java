@@ -27,11 +27,11 @@ public class ApiServer {
         try {
             // ローカルホスト(127.0.0.1)にのみバインドし、外部からの直接アクセスを防止
             server = HttpServer.create(new InetSocketAddress("127.0.0.1", port), 0);
-            
+
             // サーバー負荷を最小化するため、固定スレッドプール(2スレッド)を使用
             executor = Executors.newFixedThreadPool(2);
             server.setExecutor(executor);
-            
+
             server.start();
             plugin.getLogger().info("API サーバーがポート " + port + " で起動しました。 (127.0.0.1 のみバインド)");
         } catch (IOException e) {
@@ -112,13 +112,16 @@ public class ApiServer {
     }
 
     public static void sendErrorResponse(HttpExchange exchange, SystemApiError error) throws IOException {
-        sendResponse(exchange, error.getStatusCode(), 
-            "{\"success\": false, \"error\": \"" + escapeJson(error.name()) + "\", \"message\": \"" + escapeJson(error.getFormattedMessage()) + "\"}");
+        sendResponse(exchange, error.getStatusCode(),
+                "{\"success\": false, \"error\": \"" + escapeJson(error.name()) + "\", \"message\": \""
+                        + escapeJson(error.getFormattedMessage()) + "\"}");
     }
 
-    public static void sendErrorResponse(HttpExchange exchange, SystemApiError error, String details) throws IOException {
-        sendResponse(exchange, error.getStatusCode(), 
-            "{\"success\": false, \"error\": \"" + escapeJson(error.name()) + "\", \"message\": \"" + escapeJson(error.getFormattedMessage(details)) + "\"}");
+    public static void sendErrorResponse(HttpExchange exchange, SystemApiError error, String details)
+            throws IOException {
+        sendResponse(exchange, error.getStatusCode(),
+                "{\"success\": false, \"error\": \"" + escapeJson(error.name()) + "\", \"message\": \""
+                        + escapeJson(error.getFormattedMessage(details)) + "\"}");
     }
 
     /**
@@ -126,7 +129,8 @@ public class ApiServer {
      * ダブルクォート、バックスラッシュ、改行等をエスケープし、JSON構文の破壊を防止する。
      */
     public static String escapeJson(String value) {
-        if (value == null) return "null";
+        if (value == null)
+            return "null";
         return value
                 .replace("\\", "\\\\")
                 .replace("\"", "\\\"")

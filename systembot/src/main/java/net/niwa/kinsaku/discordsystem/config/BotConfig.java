@@ -22,7 +22,7 @@ public class BotConfig {
         try {
             // まずはカレントディレクトリの.envを読み込む
             dotenv = Dotenv.configure().ignoreIfMissing().load();
-            
+
             // もしカレントディレクトリに .env がなく、一つ上のディレクトリにある場合はそちらを読み込む
             if (dotenv.get("DISCORD_BOT_TOKEN") == null) {
                 File parentEnv = new File("../.env");
@@ -68,14 +68,43 @@ public class BotConfig {
         return instance;
     }
 
-    public String getBotToken() { return botToken; }
-    public String getGuildId() { return guildId; }
-    public String getAdminRoleId() { return adminRoleId; }
-    public String getWhitelistedRoleId() { return whitelistedRoleId; }
-    public String getPluginApiUrl() { return pluginApiUrl; }
-    public String getPluginApiKey() { return pluginApiKey; }
-    public boolean isBotTestMode() { return botTestMode; }
-    public String getJavaServerAddress() { return javaServerAddress; }
-    public String getBedrockServerAddress() { return bedrockServerAddress; }
-    public String getBedrockServerPort() { return bedrockServerPort; }
+    public String getBotToken() {
+        return botToken;
+    }
+
+    public String getGuildId() {
+        return guildId;
+    }
+
+    public String getAdminRoleId() {
+        return adminRoleId;
+    }
+
+    public String getWhitelistedRoleId() {
+        return whitelistedRoleId;
+    }
+
+    public String getPluginApiUrl() {
+        return pluginApiUrl;
+    }
+
+    public String getPluginApiKey() {
+        return pluginApiKey;
+    }
+
+    public boolean isBotTestMode() {
+        return botTestMode;
+    }
+
+    public String getJavaServerAddress() {
+        return javaServerAddress;
+    }
+
+    public String getBedrockServerAddress() {
+        return bedrockServerAddress;
+    }
+
+    public String getBedrockServerPort() {
+        return bedrockServerPort;
+    }
 }

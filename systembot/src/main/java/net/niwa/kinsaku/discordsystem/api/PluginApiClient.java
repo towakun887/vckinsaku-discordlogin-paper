@@ -41,7 +41,8 @@ public class PluginApiClient {
     }
 
     public CompletableFuture<Void> refreshUniversityCache() {
-        return getUniversities().thenAccept(unis -> {});
+        return getUniversities().thenAccept(unis -> {
+        });
     }
 
     // アカウント情報用のモデルクラス
@@ -109,9 +110,9 @@ public class PluginApiClient {
     public CompletableFuture<WhitelistResponse> addToWhitelist(WhitelistRequest request) {
         if (BotConfig.getInstance().isBotTestMode()) {
             WhitelistResponse resp = gson.fromJson(
-                "{\"success\":true,\"message\":\"[TEST MODE] ホワイトリスト登録を偽装しました。\",\"minecraft_uuid\":\"" + java.util.UUID.randomUUID() + "\"}",
-                WhitelistResponse.class
-            );
+                    "{\"success\":true,\"message\":\"[TEST MODE] ホワイトリスト登録を偽装しました。\",\"minecraft_uuid\":\""
+                            + java.util.UUID.randomUUID() + "\"}",
+                    WhitelistResponse.class);
             return CompletableFuture.completedFuture(resp);
         }
 
@@ -131,7 +132,8 @@ public class PluginApiClient {
                             return errResp;
                         }
                         // 予期せぬエラー
-                        return gson.fromJson("{\"success\":false,\"error\":\"HTTP " + response.statusCode() + "\",\"message\":\"APIサーバーがエラーを返しました。\"}", WhitelistResponse.class);
+                        return gson.fromJson("{\"success\":false,\"error\":\"HTTP " + response.statusCode()
+                                + "\",\"message\":\"APIサーバーがエラーを返しました。\"}", WhitelistResponse.class);
                     }
                 });
     }
@@ -139,9 +141,10 @@ public class PluginApiClient {
     /**
      * アカウントの個別削除
      */
-    public CompletableFuture<Integer> removeAccount(int accountId) {
+    public CompletableFuture<WhitelistResponse> removeAccount(int accountId) {
         if (BotConfig.getInstance().isBotTestMode()) {
-            return CompletableFuture.completedFuture(200);
+            return CompletableFuture.completedFuture(
+                    gson.fromJson("{\"success\":true,\"message\":\"[TEST MODE]\"}", WhitelistResponse.class));
         }
 
         HttpRequest httpRequest = createRequestBuilder("/api/accounts/" + accountId)
@@ -149,15 +152,27 @@ public class PluginApiClient {
                 .build();
 
         return httpClient.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
-                .thenApply(HttpResponse::statusCode);
+                .thenApply(response -> {
+                    if (response.statusCode() == 200) {
+                        return gson.fromJson(response.body(), WhitelistResponse.class);
+                    } else {
+                        WhitelistResponse errResp = gson.fromJson(response.body(), WhitelistResponse.class);
+                        if (errResp != null && errResp.getMessage() != null) {
+                            return errResp;
+                        }
+                        return gson.fromJson("{\"success\":false,\"error\":\"HTTP " + response.statusCode()
+                                + "\",\"message\":\"APIサーバーがエラーを返しました。\"}", WhitelistResponse.class);
+                    }
+                });
     }
 
     /**
      * Discordユーザーの全アカウント削除
      */
-    public CompletableFuture<Integer> removeAllAccounts(String discordId) {
+    public CompletableFuture<WhitelistResponse> removeAllAccounts(String discordId) {
         if (BotConfig.getInstance().isBotTestMode()) {
-            return CompletableFuture.completedFuture(200);
+            return CompletableFuture.completedFuture(
+                    gson.fromJson("{\"success\":true,\"message\":\"[TEST MODE]\"}", WhitelistResponse.class));
         }
 
         HttpRequest httpRequest = createRequestBuilder("/api/accounts/by-discord/" + discordId)
@@ -165,7 +180,18 @@ public class PluginApiClient {
                 .build();
 
         return httpClient.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
-                .thenApply(HttpResponse::statusCode);
+                .thenApply(response -> {
+                    if (response.statusCode() == 200) {
+                        return gson.fromJson(response.body(), WhitelistResponse.class);
+                    } else {
+                        WhitelistResponse errResp = gson.fromJson(response.body(), WhitelistResponse.class);
+                        if (errResp != null && errResp.getMessage() != null) {
+                            return errResp;
+                        }
+                        return gson.fromJson("{\"success\":false,\"error\":\"HTTP " + response.statusCode()
+                                + "\",\"message\":\"APIサーバーがエラーを返しました。\"}", WhitelistResponse.class);
+                    }
+                });
     }
 
     /**
@@ -173,7 +199,8 @@ public class PluginApiClient {
      */
     public CompletableFuture<List<PlayerAccount>> getPlayerInfo(String discordId) {
         if (BotConfig.getInstance().isBotTestMode()) {
-            return CompletableFuture.completedFuture(testData != null && testData.playerInfo != null ? testData.playerInfo : List.of());
+            return CompletableFuture
+                    .completedFuture(testData != null && testData.playerInfo != null ? testData.playerInfo : List.of());
         }
 
         HttpRequest httpRequest = createRequestBuilder("/api/players/" + discordId)
@@ -183,7 +210,8 @@ public class PluginApiClient {
         return httpClient.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
                 .thenApply(response -> {
                     if (response.statusCode() == 200) {
-                        java.lang.reflect.Type listType = new TypeToken<List<PlayerAccount>>(){}.getType();
+                        java.lang.reflect.Type listType = new TypeToken<List<PlayerAccount>>() {
+                        }.getType();
                         return gson.fromJson(response.body(), listType);
                     }
                     return List.of();
@@ -195,17 +223,20 @@ public class PluginApiClient {
      */
     public CompletableFuture<List<PlayerAccount>> searchPlayer(String query) {
         if (BotConfig.getInstance().isBotTestMode()) {
-            return CompletableFuture.completedFuture(testData != null && testData.searchPlayer != null ? testData.searchPlayer : List.of());
+            return CompletableFuture.completedFuture(
+                    testData != null && testData.searchPlayer != null ? testData.searchPlayer : List.of());
         }
 
-        HttpRequest httpRequest = createRequestBuilder("/api/players/search?q=" + java.net.URLEncoder.encode(query, StandardCharsets.UTF_8))
+        HttpRequest httpRequest = createRequestBuilder(
+                "/api/players/search?q=" + java.net.URLEncoder.encode(query, StandardCharsets.UTF_8))
                 .GET()
                 .build();
 
         return httpClient.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
                 .thenApply(response -> {
                     if (response.statusCode() == 200) {
-                        java.lang.reflect.Type listType = new TypeToken<List<PlayerAccount>>(){}.getType();
+                        java.lang.reflect.Type listType = new TypeToken<List<PlayerAccount>>() {
+                        }.getType();
                         return gson.fromJson(response.body(), listType);
                     }
                     return List.of();
@@ -217,12 +248,14 @@ public class PluginApiClient {
      */
     public CompletableFuture<List<PlayerAccount>> getPlayerList(String university, String edition) {
         if (BotConfig.getInstance().isBotTestMode()) {
-            return CompletableFuture.completedFuture(testData != null && testData.playerList != null ? testData.playerList : List.of());
+            return CompletableFuture
+                    .completedFuture(testData != null && testData.playerList != null ? testData.playerList : List.of());
         }
 
         StringBuilder query = new StringBuilder("?");
         if (university != null && !university.isEmpty()) {
-            query.append("university=").append(java.net.URLEncoder.encode(university, StandardCharsets.UTF_8)).append("&");
+            query.append("university=").append(java.net.URLEncoder.encode(university, StandardCharsets.UTF_8))
+                    .append("&");
         }
         if (edition != null && !edition.isEmpty()) {
             query.append("edition=").append(java.net.URLEncoder.encode(edition, StandardCharsets.UTF_8)).append("&");
@@ -235,7 +268,8 @@ public class PluginApiClient {
         return httpClient.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
                 .thenApply(response -> {
                     if (response.statusCode() == 200) {
-                        java.lang.reflect.Type listType = new TypeToken<List<PlayerAccount>>(){}.getType();
+                        java.lang.reflect.Type listType = new TypeToken<List<PlayerAccount>>() {
+                        }.getType();
                         return gson.fromJson(response.body(), listType);
                     }
                     return List.of();
@@ -247,7 +281,8 @@ public class PluginApiClient {
      */
     public CompletableFuture<Map<String, Object>> getStatistics() {
         if (BotConfig.getInstance().isBotTestMode()) {
-            return CompletableFuture.completedFuture(testData != null && testData.statistics != null ? testData.statistics : Map.of());
+            return CompletableFuture
+                    .completedFuture(testData != null && testData.statistics != null ? testData.statistics : Map.of());
         }
 
         HttpRequest httpRequest = createRequestBuilder("/api/statistics")
@@ -257,7 +292,8 @@ public class PluginApiClient {
         return httpClient.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
                 .thenApply(response -> {
                     if (response.statusCode() == 200) {
-                        java.lang.reflect.Type mapType = new TypeToken<Map<String, Object>>(){}.getType();
+                        java.lang.reflect.Type mapType = new TypeToken<Map<String, Object>>() {
+                        }.getType();
                         return gson.fromJson(response.body(), mapType);
                     }
                     return Map.of();
@@ -269,7 +305,8 @@ public class PluginApiClient {
      */
     public CompletableFuture<List<UniversityInfo>> getUniversities() {
         if (BotConfig.getInstance().isBotTestMode()) {
-            List<UniversityInfo> list = testData != null && testData.universities != null ? testData.universities : List.of();
+            List<UniversityInfo> list = testData != null && testData.universities != null ? testData.universities
+                    : List.of();
             universityRoleMap.clear();
             cachedUniversities.clear();
             for (UniversityInfo uni : list) {
@@ -288,7 +325,8 @@ public class PluginApiClient {
         return httpClient.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
                 .thenApply(response -> {
                     if (response.statusCode() == 200) {
-                        java.lang.reflect.Type listType = new TypeToken<List<UniversityInfo>>(){}.getType();
+                        java.lang.reflect.Type listType = new TypeToken<List<UniversityInfo>>() {
+                        }.getType();
                         List<UniversityInfo> list = gson.fromJson(response.body(), listType);
                         universityRoleMap.clear();
                         cachedUniversities.clear();
@@ -436,7 +474,9 @@ public class PluginApiClient {
      */
     public CompletableFuture<List<OnlinePlayerDetail>> getOnlinePlayersDetail() {
         if (BotConfig.getInstance().isBotTestMode()) {
-            return CompletableFuture.completedFuture(testData != null && testData.onlinePlayersDetail != null ? testData.onlinePlayersDetail : List.of());
+            return CompletableFuture.completedFuture(
+                    testData != null && testData.onlinePlayersDetail != null ? testData.onlinePlayersDetail
+                            : List.of());
         }
 
         HttpRequest httpRequest = createRequestBuilder("/api/players/online")
@@ -446,7 +486,8 @@ public class PluginApiClient {
         return httpClient.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
                 .thenApply(response -> {
                     if (response.statusCode() == 200) {
-                        java.lang.reflect.Type listType = new TypeToken<List<OnlinePlayerDetail>>(){}.getType();
+                        java.lang.reflect.Type listType = new TypeToken<List<OnlinePlayerDetail>>() {
+                        }.getType();
                         return gson.fromJson(response.body(), listType);
                     }
                     return List.of();
@@ -470,4 +511,3 @@ public class PluginApiClient {
                 .thenApply(response -> response.statusCode() == 200);
     }
 }
-

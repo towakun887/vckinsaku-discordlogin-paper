@@ -186,14 +186,7 @@ public class PlayersHandler implements HttpHandler {
         CompletableFuture.runAsync(() -> {
             try {
                 // まずアカウント情報を取得
-                List<MinecraftAccount> activeAccounts = dbManager.searchAccounts(String.valueOf(accountId));
-                MinecraftAccount target = null;
-                for (MinecraftAccount acc : activeAccounts) {
-                    if (acc.id == accountId) {
-                        target = acc;
-                        break;
-                    }
-                }
+                MinecraftAccount target = dbManager.getAccountById(accountId);
 
                 if (target == null) {
                     ApiServer.sendErrorResponse(exchange, SystemApiError.INVALID_REQUEST, "対象のアカウントが見つかりません。");
@@ -244,6 +237,11 @@ public class PlayersHandler implements HttpHandler {
                                 }
                             } catch (Exception e) {
                                 plugin.getLogger().severe("DB削除処理エラー: " + e.getMessage());
+                                try {
+                                    ApiServer.sendResponse(exchange, 500,
+                                            "{\"success\": false, \"message\": \"DB削除処理中にエラーが発生しました。\"}");
+                                } catch (IOException ignored) {
+                                }
                             }
                         });
                     } else {
@@ -328,11 +326,21 @@ public class PlayersHandler implements HttpHandler {
                                 }
                             } catch (Exception e) {
                                 plugin.getLogger().severe("DB削除(全件)エラー: " + e.getMessage());
+                                try {
+                                    ApiServer.sendResponse(exchange, 500,
+                                            "{\"success\": false, \"message\": \"DB削除(全件)処理中にエラーが発生しました。\"}");
+                                } catch (IOException ignored) {
+                                }
                             }
                         });
 
                     } catch (Exception e) {
                         plugin.getLogger().severe("全件削除中のメインスレッド処理エラー: " + e.getMessage());
+                        try {
+                            ApiServer.sendResponse(exchange, 500,
+                                    "{\"success\": false, \"message\": \"全件削除のメインスレッド処理中にエラーが発生しました。\"}");
+                        } catch (IOException ignored) {
+                        }
                     }
                 });
 
