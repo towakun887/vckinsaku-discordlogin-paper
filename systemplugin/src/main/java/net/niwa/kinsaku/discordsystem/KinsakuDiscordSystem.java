@@ -26,7 +26,8 @@ public final class KinsakuDiscordSystem extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        getLogger().info("KinsakuDiscordSystem が有効化されました。");
+        String version = getPluginMeta().getVersion();
+        getLogger().info("KinsakuDiscordSystem v" + version + " が有効化されました。");
         
         // 設定ファイルのロード
         saveDefaultConfig();

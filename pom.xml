@@ -6,7 +6,7 @@
 
     <groupId>net.niwa.kinsaku.discordsystem</groupId>
     <artifactId>KinsakuDiscordSystem-Parent</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>${revision}</version>
     <packaging>pom</packaging>
 
     <name>KinsakuDiscordSystem-Parent</name>
@@ -17,6 +17,7 @@
     </modules>
 
     <properties>
+        <revision>1.1-SNAPSHOT</revision>
         <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>

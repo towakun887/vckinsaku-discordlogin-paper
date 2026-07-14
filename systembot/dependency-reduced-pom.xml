@@ -3,12 +3,11 @@
   <parent>
     <artifactId>KinsakuDiscordSystem-Parent</artifactId>
     <groupId>net.niwa.kinsaku.discordsystem</groupId>
-    <version>1.0-SNAPSHOT</version>
+    <version>${revision}</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>systembot</artifactId>
   <name>DiscordBotSystem</name>
-  <version>1.0-SNAPSHOT</version>
   <build>
     <plugins>
       <plugin>

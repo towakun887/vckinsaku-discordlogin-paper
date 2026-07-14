@@ -7,11 +7,10 @@
     <parent>
         <groupId>net.niwa.kinsaku.discordsystem</groupId>
         <artifactId>KinsakuDiscordSystem-Parent</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <version>${revision}</version>
     </parent>
 
     <artifactId>systembot</artifactId>
-    <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>DiscordBotSystem</name>
