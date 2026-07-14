@@ -18,7 +18,7 @@ public class EmbedTemplates {
     private static final Color COLOR_YELLOW = new Color(254, 231, 92); // #FEE75C (Yellow)
 
     // icon
-    private static final String KINSAKU_ICON = "https://cdn.discordapp.com/icons/1521474860306530314/87d9fc1be80ddf84b1db2eb3224758a9.webp";
+    public static final String KINSAKU_ICON = "https://cdn.discordapp.com/icons/1521474860306530314/87d9fc1be80ddf84b1db2eb3224758a9.webp";
 
     /**
      * 共通の基本EmbedBuilderを作成する（デフォルトカラーは黄色に設定）
@@ -85,7 +85,6 @@ public class EmbedTemplates {
                 .addField("🏫 申請大学", PluginApiClient.getUniversityDisplay(university), true)
                 .addField("👾 エディション", edition, true)
                 .addField("🆔 Minecraft ID", "`" + minecraftId + "`", true)
-                .addField("🔗 UUID", "`" + uuid + "`", false)
                 .build();
     }
 
@@ -204,29 +203,38 @@ public class EmbedTemplates {
         EmbedBuilder builder = createBaseBuilder(true)
                 .setTitle("📋 登録プレイヤー一覧");
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("フィルタ: 大学=").append(universityFilter != null ? universityFilter : "すべて")
-                .append(", エディション=").append(editionFilter != null ? editionFilter : "すべて").append("\n\n");
+        String description = "フィルタ: 大学=" + (universityFilter != null ? universityFilter : "すべて")
+                + ", エディション=" + (editionFilter != null ? editionFilter : "すべて") + "\n\n";
 
-        int itemsPerPage = 10;
+        int itemsPerPage = 25;
         int startIndex = (page - 1) * itemsPerPage;
         int endIndex = Math.min(startIndex + itemsPerPage, players.size());
 
         if (players.isEmpty() || startIndex >= players.size()) {
-            sb.append("*登録プレイヤーはいません。*");
+            description += "*登録プレイヤーはいません。*";
+            builder.setDescription(description);
         } else {
+            builder.setDescription(description);
             for (int i = startIndex; i < endIndex; i++) {
                 PlayerAccount acc = players.get(i);
-                sb.append(String.format("• **%s** (%s) - 大学: %s | Discord: <@%s> (最終ログイン: %s)\n",
-                        acc.minecraftId, acc.edition, PluginApiClient.getUniversityDisplay(acc.universityName),
+                boolean isBe = "BEDROCK".equalsIgnoreCase(acc.edition);
+                String key = String.format("%s (%s)", acc.minecraftId, isBe ? "B" : "J");
+                String label = isBe ? "XUID" : "UUID";
+                String value = String.format("<@%s> %s\n%s: `%s`\n最終ログイン: %s",
                         acc.discordId,
-                        acc.lastLoginAt != null ? acc.lastLoginAt : "未ログイン"));
+                        PluginApiClient.getUniversityDisplay(acc.universityName),
+                        label,
+                        acc.minecraftUuid != null ? acc.minecraftUuid : "不明",
+                        acc.lastLoginAt != null ? acc.lastLoginAt : "未ログイン");
+                builder.addField(key, value, true);
             }
             int totalPages = (int) Math.ceil((double) players.size() / itemsPerPage);
-            sb.append("\n\n").append(String.format("ページ %d/%d (合計 %d 件)", page, totalPages, players.size()));
+            String currentFooter = "金策サバイバルシステム（管理者）";
+            builder.setFooter(
+                    currentFooter + " | " + String.format("ページ %d/%d (合計 %d 件)", page, totalPages, players.size()),
+                    KINSAKU_ICON);
         }
 
-        builder.setDescription(sb.toString());
         return builder.build();
     }
 

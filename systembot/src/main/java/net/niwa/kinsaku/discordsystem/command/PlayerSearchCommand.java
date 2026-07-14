@@ -25,16 +25,19 @@ public class PlayerSearchCommand extends ListenerAdapter {
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
         String cmdName = event.getName();
-        if (!cmdName.equals("player-search-by-discord") && !cmdName.equals("player-search-by-minecraft")) {
+        if (!cmdName.equals("player-search-by-discord") && !cmdName.equals("player-search-by-minecraft") &&
+            !cmdName.equals("admin-player-search-by-discord") && !cmdName.equals("admin-player-search-by-minecraft")) {
             return;
         }
 
-        event.deferReply(false).queue(hook -> {
-            if (cmdName.equals("player-search-by-discord")) {
+        boolean isAdminSearch = cmdName.startsWith("admin-");
+
+        event.deferReply(true).queue(hook -> {
+            if (cmdName.endsWith("player-search-by-discord")) {
                 User user = event.getOption("user").getAsUser();
                 
                 apiClient.getPlayerInfo(user.getId()).thenAccept(accounts -> {
-                    sendPlayerInfoEmbed(hook, user, accounts);
+                    sendPlayerInfoEmbed(hook, user, accounts, isAdminSearch);
                 }).exceptionally(ex -> {
                     hook.editOriginalEmbeds(EmbedTemplates.createResultEmbed(
                             false, "❌ エラー", "情報の取得中にエラーが発生しました。\n" + ex.getMessage(), false
@@ -42,7 +45,7 @@ public class PlayerSearchCommand extends ListenerAdapter {
                     return null;
                 });
                 
-            } else if (cmdName.equals("player-search-by-minecraft")) {
+            } else if (cmdName.endsWith("player-search-by-minecraft")) {
                 String mcId = event.getOption("id").getAsString().trim();
 
                 apiClient.searchPlayer(mcId).thenAccept(accounts -> {
@@ -51,7 +54,7 @@ public class PlayerSearchCommand extends ListenerAdapter {
                             .anyMatch(a -> a.minecraftId != null && a.minecraftId.equalsIgnoreCase(mcId));
 
                     if (hasExactMatch) {
-                        sendMinecraftPlayerInfoEmbed(hook, mcId, accounts);
+                        sendMinecraftPlayerInfoEmbed(hook, mcId, accounts, isAdminSearch);
                         return;
                     }
 
@@ -76,10 +79,10 @@ public class PlayerSearchCommand extends ListenerAdapter {
                                     .anyMatch(a -> a.minecraftId != null && a.minecraftId.equalsIgnoreCase(finalAdjustedMcId));
 
                             if (hasAdjustedExactMatch) {
-                                sendMinecraftPlayerInfoEmbed(hook, finalAdjustedMcId, adjustedAccounts);
+                                sendMinecraftPlayerInfoEmbed(hook, finalAdjustedMcId, adjustedAccounts, isAdminSearch);
                             } else {
                                 // 補正後も完全一致しなければ見つからなかった扱いにする
-                                sendMinecraftPlayerInfoEmbed(hook, finalAdjustedMcId, List.of());
+                                sendMinecraftPlayerInfoEmbed(hook, finalAdjustedMcId, List.of(), isAdminSearch);
                             }
                         }).exceptionally(ex -> {
                             hook.editOriginalEmbeds(EmbedTemplates.createResultEmbed(
@@ -88,7 +91,7 @@ public class PlayerSearchCommand extends ListenerAdapter {
                             return null;
                         });
                     } else {
-                        sendMinecraftPlayerInfoEmbed(hook, mcId, List.of());
+                        sendMinecraftPlayerInfoEmbed(hook, mcId, List.of(), isAdminSearch);
                     }
                 }).exceptionally(ex -> {
                     hook.editOriginalEmbeds(EmbedTemplates.createResultEmbed(
@@ -100,7 +103,7 @@ public class PlayerSearchCommand extends ListenerAdapter {
         });
     }
 
-    private void sendPlayerInfoEmbed(InteractionHook hook, User user, List<PlayerAccount> accounts) {
+    private void sendPlayerInfoEmbed(InteractionHook hook, User user, List<PlayerAccount> accounts, boolean isAdminSearch) {
         EmbedBuilder eb = EmbedTemplates.createBaseBuilder(false);
         eb.setAuthor(user.getName(), null, user.getEffectiveAvatarUrl());
 
@@ -131,9 +134,14 @@ public class PlayerSearchCommand extends ListenerAdapter {
 
             for (PlayerAccount acc : accounts) {
                 String status = acc.isActive ? "✅ 有効" : "❌ 無効";
+                String fieldValue = "ID: `" + acc.minecraftId + "`\n状態: " + status;
+                if (isAdminSearch) {
+                    String label = "BEDROCK".equalsIgnoreCase(acc.edition) ? "XUID" : "UUID";
+                    fieldValue += "\n" + label + ": `" + (acc.minecraftUuid != null ? acc.minecraftUuid : "不明") + "`";
+                }
                 eb.addField(
                         acc.edition.equals("JAVA") ? "☕ Java Edition" : "📱 Bedrock Edition",
-                        "ID: `" + acc.minecraftId + "`\n状態: " + status,
+                        fieldValue,
                         true
                 );
             }
@@ -142,7 +150,7 @@ public class PlayerSearchCommand extends ListenerAdapter {
         });
     }
 
-    private void sendMinecraftPlayerInfoEmbed(InteractionHook hook, String queryId, List<PlayerAccount> foundAccounts) {
+    private void sendMinecraftPlayerInfoEmbed(InteractionHook hook, String queryId, List<PlayerAccount> foundAccounts, boolean isAdminSearch) {
         if (foundAccounts == null || foundAccounts.isEmpty()) {
             hook.editOriginalEmbeds(EmbedTemplates.createResultEmbed(
                     false,
@@ -179,9 +187,15 @@ public class PlayerSearchCommand extends ListenerAdapter {
             EmbedBuilder eb = EmbedTemplates.createBaseBuilder(false);
             eb.setTitle("検索結果: " + queryId);
             for (PlayerAccount acc : exactMatches) {
+                String status = acc.isActive ? "✅ 有効" : "❌ 無効";
+                String fieldValue = "ID: `" + acc.minecraftId + "`\n状態: " + status;
+                if (isAdminSearch) {
+                    String label = "BEDROCK".equalsIgnoreCase(acc.edition) ? "XUID" : "UUID";
+                    fieldValue += "\n" + label + ": `" + (acc.minecraftUuid != null ? acc.minecraftUuid : "不明") + "`";
+                }
                 eb.addField(
                         acc.edition.equals("JAVA") ? "☕ Java Edition" : "📱 Bedrock Edition",
-                        "ID: `" + acc.minecraftId + "`\n状態: " + (acc.isActive ? "✅ 有効" : "❌ 無効"),
+                        fieldValue,
                         true
                 );
             }
@@ -211,11 +225,11 @@ public class PlayerSearchCommand extends ListenerAdapter {
             hook.getJDA().retrieveUserById(representativeDiscordId).queue(
                 user -> {
                     eb.setAuthor(user.getName(), null, user.getEffectiveAvatarUrl());
-                    buildMinecraftPlayerBody(hook, eb, allAccounts);
+                    buildMinecraftPlayerBody(hook, eb, allAccounts, isAdminSearch);
                 },
                 error -> {
                     eb.setAuthor("不明なユーザー (ID: " + representativeDiscordId + ")");
-                    buildMinecraftPlayerBody(hook, eb, allAccounts);
+                    buildMinecraftPlayerBody(hook, eb, allAccounts, isAdminSearch);
                 }
             );
         }).exceptionally(ex -> {
@@ -226,7 +240,7 @@ public class PlayerSearchCommand extends ListenerAdapter {
         });
     }
 
-    private void buildMinecraftPlayerBody(InteractionHook hook, EmbedBuilder eb, List<PlayerAccount> accounts) {
+    private void buildMinecraftPlayerBody(InteractionHook hook, EmbedBuilder eb, List<PlayerAccount> accounts, boolean isAdminSearch) {
         // 重複を除去しながら所属を表示
         List<String> uniNames = accounts.stream()
                 .map(a -> a.universityName)
@@ -253,9 +267,14 @@ public class PlayerSearchCommand extends ListenerAdapter {
 
             for (PlayerAccount acc : accounts) {
                 String status = acc.isActive ? "✅ 有効" : "❌ 無効";
+                String fieldValue = "ID: `" + acc.minecraftId + "`\n状態: " + status;
+                if (isAdminSearch) {
+                    String label = "BEDROCK".equalsIgnoreCase(acc.edition) ? "XUID" : "UUID";
+                    fieldValue += "\n" + label + ": `" + (acc.minecraftUuid != null ? acc.minecraftUuid : "不明") + "`";
+                }
                 eb.addField(
                         acc.edition.equals("JAVA") ? "☕ Java Edition" : "📱 Bedrock Edition",
-                        "ID: `" + acc.minecraftId + "`\n状態: " + status,
+                        fieldValue,
                         true
                 );
             }

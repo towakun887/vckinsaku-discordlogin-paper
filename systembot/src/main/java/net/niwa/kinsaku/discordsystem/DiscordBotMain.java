@@ -208,11 +208,26 @@ public class DiscordBotMain {
                 .slash("player-search-by-discord", "Discordユーザーからプレイヤーの登録状況を検索します")
                 .addOption(OptionType.USER, "user", "Discordユーザー", true);
 
+        SlashCommandData adminPlayerSearchByMinecraftCmd = Commands
+                .slash("admin-player-search-by-minecraft", "(管理者) Minecraft IDからプレイヤーの登録状況を検索します(UUID付き)")
+                .addOption(OptionType.STRING, "id", "MinecraftのID", true)
+                .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR));
+
+        SlashCommandData adminPlayerSearchByDiscordCmd = Commands
+                .slash("admin-player-search-by-discord", "(管理者) Discordユーザーからプレイヤーの登録状況を検索します(UUID付き)")
+                .addOption(OptionType.USER, "user", "Discordユーザー", true)
+                .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR));
+
+        SlashCommandData adminUniversitySearchCmd = Commands
+                .slash("admin-university-search", "(管理者) 指定した大学の情報を検索します（詳細情報付き）")
+                .addOption(OptionType.ROLE, "role", "検索する大学のロール", true)
+                .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR));
+
         SlashCommandData serverListCmd = Commands.slash("server-list", "現在のオンラインプレイヤー一覧を表示します");
 
         List<SlashCommandData> commandDataList = List.of(supportCmd, addCmd, remCmd, adminCmd, adminRemCmd,
                 universityAddCmd, universityRemCmd, universityEditCmd, universitySearchCmd, playerSearchByMinecraftCmd,
-                playerSearchByDiscordCmd, serverListCmd);
+                playerSearchByDiscordCmd, serverListCmd, adminPlayerSearchByMinecraftCmd, adminPlayerSearchByDiscordCmd, adminUniversitySearchCmd);
 
         if (guildId != null && !guildId.isEmpty()) {
             Guild guild = jda.getGuildById(guildId);

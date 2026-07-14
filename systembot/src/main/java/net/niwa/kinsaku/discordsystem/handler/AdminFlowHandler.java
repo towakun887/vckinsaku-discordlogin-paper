@@ -10,6 +10,7 @@ import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.niwa.kinsaku.discordsystem.api.PluginApiClient;
+import net.niwa.kinsaku.discordsystem.api.PluginApiClient.UniversityInfo;
 import net.niwa.kinsaku.discordsystem.command.ServerAdminCommand;
 import net.niwa.kinsaku.discordsystem.config.BotConfig;
 import net.niwa.kinsaku.discordsystem.util.CommandMentionHelper;
@@ -34,7 +35,7 @@ public class AdminFlowHandler extends ListenerAdapter {
         if (newEmbed.getFooter() != null && newEmbed.getFooter().getText() != null) {
             String footerText = newEmbed.getFooter().getText();
             if (!footerText.equals("管理者専用機能") && !footerText.contains("リアルタイム集計")) {
-                desc = (desc != null ? desc : "") + "\n\n*💡 " + footerText + "*";
+                desc = (desc != null ? desc : ".");
             }
         }
         builder.setDescription(desc);
@@ -103,14 +104,19 @@ public class AdminFlowHandler extends ListenerAdapter {
 
                 case "admin:search_help":
                     String searchHelp = "🔍 **プレイヤー検索ヘルプ**\n\n" +
-                            "特定のプレイヤー情報（紐づく全てのMinecraft IDとエディション）を検索・確認するには、管理者用-add/rem等のコマンドを使用するのが最も簡単です。\n" +
-                            "以下のコマンドに確認したいプレイヤーの情報を入力して実行してください：\n" +
+                            "特定のプレイヤーや大学の所属情報を詳細検索（UUID/XUID付き）するには、以下の管理者用検索コマンドを実行してください。これらのコマンドはephemeral（実行した本人のみ表示）で動作します：\n" +
+                            "• " + CommandMentionHelper.getMention("admin-player-search-by-minecraft")
+                            + " `id:<確認したいMinecraft ID>`\n" +
+                            "• " + CommandMentionHelper.getMention("admin-player-search-by-discord")
+                            + " `user:<確認したいDiscordユーザー>`\n" +
+                            "• " + CommandMentionHelper.getMention("admin-university-search")
+                            + " `role:<確認したい大学ロール>`\n\n" +
+                            "また、アカウントの削除画面から確認することも可能です：\n" +
                             "• " + CommandMentionHelper.getMention("server-admin-rem")
                             + " `minecraft_id:<確認したいID>`\n" +
                             "• " + CommandMentionHelper.getMention("server-admin-rem")
                             + " `discord_user:<確認したいユーザーメンション>`\n\n" +
-                            "コマンド実行後、確認画面が表示され、そこで対象のアカウント情報と紐付け状態を確認できます。\n" +
-                            "確認だけが目的の場合は、削除を実行せずに **[❌ キャンセル]** ボタンを押せば、アカウントは削除されません。";
+                            "※削除コマンド実行後、確認画面が表示されますが、確認だけが目的の場合は削除を実行せずに **[❌ キャンセル]** ボタンを押せば、アカウントは削除されません。";
 
                     EmbedBuilder searchBuilder = new EmbedBuilder(originalEmbed);
                     searchBuilder.clearFields();
@@ -288,7 +294,7 @@ public class AdminFlowHandler extends ListenerAdapter {
             return;
         }
 
-        if (!buttonId.startsWith("admin:list:page:")) {
+        if (!buttonId.startsWith("admin:list:page:") && !buttonId.startsWith("admin:uni_search:page:")) {
             return;
         }
 
@@ -306,37 +312,125 @@ public class AdminFlowHandler extends ListenerAdapter {
             return;
         }
 
-        int targetPage = Integer.parseInt(buttonId.substring("admin:list:page:".length()));
-        event.deferEdit().queue(hook -> {
-            apiClient.getPlayerList(null, null).thenAccept(players -> {
-                int itemsPerPage = 10;
-                int maxPages = (int) Math.ceil((double) players.size() / itemsPerPage);
-                int page = Math.min(Math.max(targetPage, 1), Math.max(maxPages, 1));
+        if (buttonId.startsWith("admin:list:page:")) {
+            int targetPage = Integer.parseInt(buttonId.substring("admin:list:page:".length()));
+            event.deferEdit().queue(hook -> {
+                apiClient.getPlayerList(null, null).thenAccept(players -> {
+                    int itemsPerPage = 10;
+                    int maxPages = (int) Math.ceil((double) players.size() / itemsPerPage);
+                    int page = Math.min(Math.max(targetPage, 1), Math.max(maxPages, 1));
 
-                Button prevBtn = Button.secondary("admin:list:page:" + (page - 1), "◀️ 前のページ");
-                Button nextBtn = Button.secondary("admin:list:page:" + (page + 1), "▶️ 次のページ");
-                Button updateBtn = Button.primary("admin:list:page:" + page, "🔄 更新");
+                    Button prevBtn = Button.secondary("admin:list:page:" + (page - 1), "◀️ 前のページ");
+                    Button nextBtn = Button.secondary("admin:list:page:" + (page + 1), "▶️ 次のページ");
+                    Button updateBtn = Button.primary("admin:list:page:" + page, "🔄 更新");
 
-                if (page <= 1) {
-                    prevBtn = prevBtn.asDisabled();
-                }
-                if (page >= maxPages) {
-                    nextBtn = nextBtn.asDisabled();
-                }
+                    if (page <= 1) {
+                        prevBtn = prevBtn.asDisabled();
+                    }
+                    if (page >= maxPages) {
+                        nextBtn = nextBtn.asDisabled();
+                    }
 
-                MessageEmbed originalEmbed = event.getMessage().getEmbeds().get(0);
-                MessageEmbed newEmbed = EmbedTemplates.createPlayerListEmbed(players, page, null, null);
-                MessageEmbed merged = mergeEmbed(originalEmbed, newEmbed);
+                    MessageEmbed originalEmbed = event.getMessage().getEmbeds().get(0);
+                    MessageEmbed newEmbed = EmbedTemplates.createPlayerListEmbed(players, page, null, null);
+                    MessageEmbed merged = mergeEmbed(originalEmbed, newEmbed);
 
-                hook.editOriginalEmbeds(merged)
-                        .setComponents(
-                                ActionRow.of(ServerAdminCommand.createAdminMenu()),
-                                ActionRow.of(prevBtn, updateBtn, nextBtn))
-                        .queue();
-            }).exceptionally(ex -> {
-                hook.editOriginal("更新中にエラーが発生しました: " + ex.getMessage()).queue();
-                return null;
+                    hook.editOriginalEmbeds(merged)
+                            .setComponents(
+                                    ActionRow.of(ServerAdminCommand.createAdminMenu()),
+                                    ActionRow.of(prevBtn, updateBtn, nextBtn))
+                            .queue();
+                }).exceptionally(ex -> {
+                    hook.editOriginal("更新中にエラーが発生しました: " + ex.getMessage()).queue();
+                    return null;
+                });
             });
-        });
+        } else if (buttonId.startsWith("admin:uni_search:page:")) {
+            String remaining = buttonId.substring("admin:uni_search:page:".length());
+            int lastColon = remaining.lastIndexOf(':');
+            if (lastColon == -1) return;
+            String roleId = remaining.substring(0, lastColon);
+            int targetPage = Integer.parseInt(remaining.substring(lastColon + 1));
+
+            event.deferEdit().queue(hook -> {
+                apiClient.getUniversities().thenAccept(universities -> {
+                    UniversityInfo foundUni = null;
+                    for (UniversityInfo uni : universities) {
+                        if (roleId.equals(uni.discordRoleId)) {
+                            foundUni = uni;
+                            break;
+                        }
+                    }
+
+                    if (foundUni == null) {
+                        hook.editOriginal("エラー: 対象の大学が見つかりません。").queue();
+                        return;
+                    }
+
+                    final UniversityInfo uniInfo = foundUni;
+                    apiClient.getPlayerList(uniInfo.name, null).thenAccept(players -> {
+                        int itemsPerPage = 25;
+                        int maxPages = (int) Math.ceil((double) players.size() / itemsPerPage);
+                        int page = Math.min(Math.max(targetPage, 1), Math.max(maxPages, 1));
+
+                        EmbedBuilder eb = EmbedTemplates.createBaseBuilder(true);
+
+                        // Author
+                        if (uniInfo.iconUrl != null && !uniInfo.iconUrl.isEmpty()) {
+                            eb.setAuthor(uniInfo.name, null, uniInfo.iconUrl);
+                        } else {
+                            eb.setAuthor(uniInfo.name);
+                        }
+
+                        // Description: 1st line role mention
+                        String desc = "<@&" + roleId + ">";
+                        eb.setDescription(desc);
+
+                        int startIndex = (page - 1) * itemsPerPage;
+                        int endIndex = Math.min(startIndex + itemsPerPage, players.size());
+
+                        for (int i = startIndex; i < endIndex; i++) {
+                            PluginApiClient.PlayerAccount acc = players.get(i);
+                            boolean isBe = "BEDROCK".equalsIgnoreCase(acc.edition);
+                            String key = String.format("%s (%s)", acc.minecraftId, isBe ? "B" : "J");
+                            String label = isBe ? "XUID" : "UUID";
+                            String value = String.format("<@%s> %s\n%s: `%s`\n最終ログイン: %s",
+                                    acc.discordId,
+                                    PluginApiClient.getUniversityDisplay(acc.universityName),
+                                    label,
+                                    acc.minecraftUuid != null ? acc.minecraftUuid : "不明",
+                                    acc.lastLoginAt != null ? acc.lastLoginAt : "未ログイン");
+                            eb.addField(key, value, true);
+                        }
+
+                        long uniquePlayers = players.stream().map(p -> p.discordId).distinct().count();
+                        eb.addField("合計人数", "**" + uniquePlayers + "** 人", true);
+
+                        eb.setFooter("金策サバイバルシステム（管理者） | " + String.format("ページ %d/%d (合計 %d 件)", page, maxPages, players.size()), EmbedTemplates.KINSAKU_ICON);
+
+                        Button prevBtn = Button.secondary("admin:uni_search:page:" + roleId + ":" + (page - 1), "◀️ 前のページ");
+                        Button nextBtn = Button.secondary("admin:uni_search:page:" + roleId + ":" + (page + 1), "▶️ 次のページ");
+                        Button updateBtn = Button.primary("admin:uni_search:page:" + roleId + ":" + page, "🔄 更新");
+
+                        if (page <= 1) {
+                            prevBtn = prevBtn.asDisabled();
+                        }
+                        if (page >= maxPages) {
+                            nextBtn = nextBtn.asDisabled();
+                        }
+
+                        hook.editOriginalEmbeds(eb.build())
+                                .setComponents(ActionRow.of(prevBtn, updateBtn, nextBtn))
+                                .queue();
+                    }).exceptionally(ex -> {
+                        hook.editOriginal("プレイヤー一覧の取得中にエラーが発生しました: " + ex.getMessage()).queue();
+                        return null;
+                    });
+                }).exceptionally(ex -> {
+                    hook.editOriginal("大学一覧の取得中にエラーが発生しました: " + ex.getMessage()).queue();
+                    return null;
+                });
+            });
+        }
     }
 }
